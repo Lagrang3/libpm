@@ -1,0 +1,63 @@
+\section{Code units}
+
+\noindent Numbers are represented in the computers with no reference
+to units of measure.
+Therefore computer programmers are more than happy to work
+with adimentional quantities.
+However this is not always possible and the freedom 
+of physical dimensions of length, time and mass,
+introduces aditional parameters to the code contributing to 
+possible sources of mistakes.
+For the problem we are dealing here the natural choice of
+units is the following:
+\begin{itemize}
+    \item length: use $L$ the size of the box,
+    \item time: the Hubble time $H_o^{-1}$,
+    \item mass: is not needed (for the moment).
+\end{itemize}
+
+With this definition we see that the factor $Gm$,
+which are needed to compute the interaction between particles
+is determined by the number of particles $N_p$ and the 
+matter density $\Omega_{m}$, because
+at $z=0$ we have:
+\begin{equation}
+    \Omega_m = \rho_m/\rho_c = \frac{ N_p m }{ L^3} \frac{8\pi G}{ 3 H_o^2},
+\end{equation}
+therefore
+\begin{equation}
+    Gm = \frac{ 3 \Omega_m }{ 8\pi N_p} [L^3 H_o^2],
+\end{equation}
+for the computer the terms inside the square bracket can be omitted.
+
+To produce consistent computations, the input values: 
+$H_o$, $L$, $\vec x_i$ and $\vec u_i$ must be expressed using the same
+system of units, that's the only requirement.
+It doesn't matter if it is SI or CGS or any other combination,
+for instance Mpc/h for length and year/h for time.
+The output of the program will be given in the same units
+as the input.
+
+For example we use the following formulas to translate
+the input numbers into the internal representation:
+\begin{align}\
+    \begin{split}
+    \vec x_i &= \frac{ \vec x_i }{ L} [L]\\
+    \vec u_i &= \frac{ \vec u_i }{ L H_o} [L H_o]\\
+    \end{split}
+\end{align}
+
+\textsc{Gevolution}'s and \textsc{Gadget}'s default units for snapshots 
+are $10^{10}M_{\odot}/h$ for masses, $\text{kpc}/h$ for lengths
+and $\text{km/s}$ for velocities. 
+The ratio between the unit of length and velocity
+$\frac{\text{kpc}/h}{\text{km/s}} = h^{-1}\,\text{s}\,\text{kpc}/\text{km}$ 
+produces the intrisic unit of time for those snapshots.
+To ensure those snapshots are read correctly (the velocities) one must specify 
+the length of the box $L$ in units of $\text{kpc}/h$ and the Hubble parameter
+in units of $h\,\text{km}\,\text{s}^{-1}\,\text{kpc}^{-1}$,
+which is actually a trivial thing because 
+$H_o = 0.1 [h\,\text{km}\,\text{s}^{-1}\,\text{kpc}^{-1}]$ exactly
+due to the definition of $h$.
+
+

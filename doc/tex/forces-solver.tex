@@ -1,0 +1,74 @@
+\section{Force solver}
+
+\noindent The core of a pure PM code is constituted
+by the routines that compute the forces acting on the particles
+once their positions are fed as input.
+The \emph{Mesh} is a 3-dimensional grid of length $N$,
+that is used to represent the continuous density $\rho$,
+potential $\phi$ and force $\vec F$ fields.
+The steps for computation can be summarized as follows (see \cite{hockney}):
+\begin{enumerate}
+    \item assign the charges to the mesh, ie. compute $\rho$
+    from the knowledge of $\{ \vec x_i \}_{i=1\ldots N_p}$,
+    \item solve the Poisson equation to compute $\phi$
+    out of $\rho$,
+    \item compute the force field $\vec F$ 
+    from the potential $\phi$,
+    \item interpolate $\vec F$ from the mesh to the particles'
+    positions.
+\end{enumerate}
+In this experiment we will deal with one particular
+PM method that solves the differential equations that
+relate the different fields in the Fourier space.
+
+Let's for simplicity start the discussion
+in one dimension.
+The grid then helps to represent fields in 
+the cubic box $[0,L]$,
+and we will assume they are two times differentiable
+and square integrable.
+Those fields form a Hilbert space called Sobolev,
+here we will denote that space as $\H$,
+with inner product $\langle,\rangle$ such that:
+\begin{equation}
+    \langle A,B \rangle = \frac{1 }{ L} \int_{0}^L dx A^{\dagger}(x) B(x).
+\end{equation}
+Then according to Fourier's theorem the set $\{ u_n \}_{n\in \Z}$,
+where $u_n(x) = \exp(i\frac{2 \pi}{ L} x n)$, is an orthonormal
+basis of $\H$.
+That is, for any $f \in\H$ we can write:
+\begin{equation}
+    f(x) = \sum_{k=-\infty}^{\infty}\, \langle u_k, f \rangle u_k(x).
+\end{equation}
+Notice that $f$ is real-valued function if and only if
+$\langle u_k, f\rangle^* = \langle u_{-k},f \rangle$.
+
+My very first idea to this method was to take advantage
+of Nyquist--Shannon sampling theorem (see \cite{nyquist}).
+Starting from a real density field $\rho_o$, ie. the one
+computed for point particles:
+\begin{equation}
+    \rho_o(\vec x) = \sum_{i} G m\, \delta(\vec x - \vec x_i),
+    \label{eq:rhoo}
+\end{equation}
+use a \emph{low-pass} filter $\Wlow$ to eliminate frequency
+modes higher than Nyquist's $k_{\mathrm{nyquist}} \approx N/2$:
+\begin{equation}
+    \rho(\vec x) = (\Wlow*\rho_o)(\vec x),
+\end{equation}
+where $*$ denotes the convolution operator:
+\begin{equation}
+    (A*B)(x) = \int_0^L dx' A(x-x') B(x').
+\end{equation}
+
+The approximation we are making by using the mesh instead of
+a continuous field is all encoded in the difference 
+$\rho-\rho_o$, because
+Nyquist's theorem guarantees that $\rho$ can
+be recovered exactly by the only knowledge
+of the finite grid points. 
+Further on $\phi$ and $\vec F$ can be computed exactly
+in Fourier space and brought back to position space.
+The interpolation of $\vec F$ to particles position
+can again be computed exactly based on the sampling theorem.
+

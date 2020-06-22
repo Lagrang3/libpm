@@ -1,0 +1,99 @@
+\section{Dynamical equations}
+
+\noindent So which are the equations of motion of
+a set massive point particles (in comoving coordinates)
+interacting with Newtonian gravity in an expanding universe background?
+
+The metric of a Robertson--Walker cosmology has the form \cite{cosmology}:
+\begin{equation}
+    ds^2 = c^2 dt^2 - a^2 \gamma_{ij} dx^i dx^j,
+\end{equation}
+where $\gamma_{ij}$ is the 3D spatial coordinates metric,
+and depends on the curvature of the universe and the choice
+of comoving coordinates, eg. cartesian, spherical, etc.
+The non-vanishing Christoffel symbols for that metric are:
+\begin{align}
+    \begin{split}
+        \Gamma^0{}_{ij} &= \frac{a^2 H }{ c^2} \gamma_{ij} \\
+        \Gamma^i{}_{j0} &= \Gamma^i{}_{0j} = H \delta^i{}_j\\
+        \Gamma^i{}_{jk} &= \Gamma^{(3)}{}^i{}_{jk}\\
+    \end{split}
+\end{align}
+where the latin indexes $i$, $j$ and $k$ run from $1$ to $3$,
+while $H = \frac{\dot a }{ a}$ denotes the \emph{Hubble parameter},
+and $\Gamma^{(3)}$ is the Christoffel symbol computed with
+the three-dimensional metric $\gamma$.
+Thus the geodesic equations take the form:
+\begin{align}
+    \begin{split}
+    \frac{d u^0}{ d\tau} &= - \frac{H }{ c^2} a^2\gamma_{ij} u^i u^j\\
+    \frac{d u^k}{ d\tau} &= - 2 H u^k u^0 - \Gamma^{(3)}{}^k{}_{ij} u^i u^j\\
+    \end{split}
+\end{align}
+where $\tau$ is the particle proper time and $u^{\mu} = \frac{d x^{\mu}}{ d\tau}$,
+denoting $dt = dx^0$.
+If we move to cartesian coordinates and assume a flat universe the 
+term $\Gamma^{(3)}$ vanishes, and in the Newtonian limit we have:
+\begin{equation}
+    \frac{ d \vec u }{ dt}
+     = -2 H \vec u + \vec Q,
+    \label{eq:motion1}
+\end{equation}
+where we have added external non-GR forces $\vec Q$, which
+in the case of the $N$-body simulation would correspond
+to the Newtonian gravitational pull from other particles.
+
+To discover how the Newtonian graviational force translates
+into $\vec Q$ we need to move to physical coordinates:
+$\vec r = a\vec x$.
+\begin{equation}
+    \frac{d \vec r}{ dt}
+    = \frac{d}{ dt}(a\vec x)
+    = a\vec u + H \vec r,
+    \label{eq:motion2}
+\end{equation}
+here the term $H\vec r$ corresponds to Hubble's law,
+while $a\vec u = \vec v$ is the peculiar velocity
+(the motion with respect to the comoving frame).
+From equation (\ref{eq:motion1}) we can deduce
+the dynamics of the peculiar velocity:
+\begin{equation}
+    \frac{d \vec v}{ dt}
+    = \frac{d}{ dt}(a\vec u)
+    = a \frac{d\vec u}{ dt} + \dot a \vec u
+    = -H \vec v + a \vec Q,
+\end{equation}
+with $\vec F = a\vec Q$ containing the forces
+from the interaction with other bodies (not due to the Robertson-Walker background).
+Therefore in the Newtonian limit in comoving coordinates 
+the motion of the $i^\mathrm{th}$ body is determined by the equations:
+\begin{align}
+    \begin{split}
+    \frac{d\vec x_i}{ dt} &= \vec u_i,\\ 
+    \frac{d\vec u_i}{ dt}
+    &= -2H\vec u_i - \frac{1}{ a^3} \sum_j \frac{ G m_j \vec x_{ij} }{ |\vec x_{ij}|^3}.\\
+    \end{split}
+\end{align}
+Or in canonical variables, letting $\vec P = a^2 \vec u$:
+\begin{align}
+    \begin{split}
+    \frac{d\vec x_i}{ dt} &= \frac{\vec P_i }{ a^2},\\ 
+    \frac{d\vec P_i}{ dt}
+    &= - \frac{1}{ a} \sum_j \frac{ G m_j \vec x_{ij} }{ |\vec x_{ij}|^3}.\\
+    \end{split}
+    \label{eq:nbody_dynamics}
+\end{align}
+
+In addition to the equations (\ref{eq:nbody_dynamics}) 
+we also need to consider that time evolution of the cosmological background \cite{cosmology}:
+\begin{equation}
+    \frac{da}{ dt} = H a,
+\end{equation}
+where
+\begin{equation}
+    H = H_o \sqrt{ \frac{ \Omega_r }{ a^4} + \frac{ \Omega_m }{ a^3} + \Omega_\Lambda  },
+\end{equation}
+being $H_o$, $\Omega_r$, $\Omega_m$ and $\Omega_\Lambda$ the present (at $z=0$)
+values of the Hubble constant, and the radiation, matter and dark energy
+densities.
+

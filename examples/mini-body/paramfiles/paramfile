@@ -1,0 +1,25 @@
+
+###################
+#   Cosmology
+###################
+
+HubbleParam   =  0.1    # [h/kpc km/s], units of 1/time constraining velocity units to [km/s]
+Omega0        =  0.312  # dark matter density
+#OmegaLambda   =  0.688  # Lambda density = 1 - Omega0
+
+###################
+#   Simulation
+###################
+
+BoxSize       =  320000 # [kpc/h], unit of length
+Redshifts     =  100, 99
+PMGRID        =  128
+
+
+###################
+#   Snapfiles
+###################
+
+Input         = newton_snap000_cdm # input snapshot
+Output        = mini_snap # output prefix
+

@@ -1,0 +1,85 @@
+\section{Force interpolation}
+
+\noindent Forces are going to be computed as
+with finite differences of the potential $\phi$.
+It is the value of $\phi$ what we need to interpolate 
+from the knowledge of the value it takes on 
+the grid points.
+
+Once $\tilde\phi$ is known for all modes on the grid,
+then according to Theorem \ref{th:nyquist} 
+we are able to recover $\phi(x)$ exactly 
+at every point $0 \le 0 < L$ using the Fourier expansion:
+\begin{equation}
+    \phi(x) = \sum_{k=-k_N}^{k_N} \tilde \phi_k\, u_k(x).
+\end{equation}
+However, using the previous equation would imply a computational
+cost of $\mathcal{O}(N)$ for the computation of the force
+acting on every particle. Too expensive to compute in practice.
+A method involving $\mathrm{O}(1)$ operation must be deduced
+for that task, since the discrete Fourier transform 
+of $\tilde\phi_k$ gives the values $\phi_n = \phi(x_n)$
+of the potential at the grid points.
+And for the points outside there must an interpolation
+formula that computes the exact or approximate value
+of $\phi$ from the knowledge of $\phi_n$ at neighboring grid points.
+Different degrees of splines can be constructed for this
+purpose.
+
+The reconstruction of the function $\phi$ everywhere
+from the values $\phi_n$ can be made explict.
+Let's us start by evaluating the convolution $\phi * W$,
+where $W$ is not yet specified:
+\begin{align}
+    \begin{split}
+        \left( \phi* W \right)(x) 
+            &= \int dx'\, \phi(x-x')\, W(x') \\
+            &= \sum_{k=-\infty}^{\infty}\int dx'\,\langle u_k,\phi\rangle\,u_k(x-x')\, W(x')\\
+            &= \sum_{k=-\infty}^{\infty}\int dx'\,\langle u_k,\phi\rangle\,
+                u_k(x)\,u_k^{\dagger}(x')\, W(x') \\
+            &= \sum_{k=-\infty}^{\infty} \,\langle u_k,\phi\rangle\,
+                u_k(x)\, L\langle u_k, W\rangle. \\
+    \end{split}
+\end{align}
+If $\phi$ satisfies the necessary conditions
+for Theorem \ref{th:nyquist}, then 
+we write $\langle u_k,\phi\rangle$ as a sum over the sampled values
+at grid points
+\begin{align}
+    \begin{split}
+        \left( \phi* W \right)(x) 
+            &=\frac{1}{N} \sum_{n=0}^{N-1} \sum_{k=-\infty}^{\infty} \,
+                \phi_n\, \omega^{-kn} \,
+                u_k(x)\, L\langle u_k, W\rangle \\
+            &=\frac{1}{N} \sum_{n=0}^{N-1} \sum_{k=-\infty}^{\infty} \,
+                \phi_n\,
+                u_k\left(x-\frac{n}{N}L\right)\, L\langle u_k, W\rangle \\
+            &=\frac{L}{N} \sum_{n=0}^{N-1} \,
+                \phi_n\,
+                 W\left(x-\frac{n}{N}L\right). \\
+    \end{split}
+\end{align}
+If it happens that $\phi = \phi* W$, like in the case of $\Wlow$ we
+obtain:
+\begin{equation}
+    \phi(x) = 
+            \frac{L}{N} \sum_{n=0}^{N-1} \,
+                \phi_n\,
+                 \Wlow\left(x-\frac{n}{N}L\right).
+   \label{eq:whittaker}
+\end{equation}
+And that's an exact result knows as \emph{Whittaker-Shannon interpolation formula}.
+Unfortunately, equation (\ref{eq:whittaker}) gives us again 
+an algorithmic complexity of $\mathcal{O}(N)$ for the interpolation
+since $\Wlow$ is non-local.
+The literature \cite{hockney} proposes the use of the formula (\ref{eq:whittaker})
+with other filters which have a compact support, like NGP, CIC, etc,
+but bear in mind that we commit to an error than can be traced
+back to the fact that $\phi \ne \phi * W$.
+
+is made explicit
+with the Whittaker-Shannon interpolation formula.
+
+
+
+\noindent Ancora da vedere in \cite{hockney}.

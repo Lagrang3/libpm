@@ -1,0 +1,209 @@
+\section{Sampling filters}
+
+\noindent In general, the density field will not satisfy 
+the condition necessary for Theorem \ref{th:nyquist} to hold,
+that's because $\rho_o$, see equation (\ref{eq:rhoo}) is
+made up of the sum of an infinite number of Fourier modes.
+That in practice provokes the fact that when we sample
+$\rho_o$ at the grid points we get zero everywhere unless
+there is one of the particles lying precisely on top of grid
+point, due to the Dirac deltas.
+
+One possible solution to this \emph{sampling problem}
+would be to apply a low-pass filter to $\rho_o$
+thus discarding all modes above $k_N$.
+And the error we would introduce would be the approximation of
+$\rho = \Wlow * \rho_o$ to $\rho_o$. 
+With
+\begin{equation}
+    \rho(x) = \int dx' \Wlow(x-x') \rho_o(x'),
+\end{equation}
+
+The low-pass filter can actually be computed analytically
+and its convolution with Dirac deltas would be again itself.
+Considering the Fourier series for $\Wlow$ we get 
+\begin{align}
+\begin{split}
+    \langle u_k, \rho\rangle
+    &= \int dx' \sum_{k'} \langle u_{k'},\Wlow \rangle \delta_{kk'}   u_{k'}^{\dagger}(x') \rho_o(x') \\
+    &= L \langle u_{k},\Wlow \rangle \langle u_{k}, \rho_o \rangle ,
+\end{split}
+\end{align}
+therefore
+\begin{equation}
+\langle u_{k},\Wlow \rangle = \begin{cases}
+    0, & |k|>k_N\\
+    1/L, & |k|\le k_N
+    \end{cases}
+\end{equation}
+and $\Wlow$ can be reconstructed analytically from its Fourier expansion:
+\begin{equation}
+ \Wlow(x)
+ = \frac{1}{L}\sum_{k=-n_N}^{k_N} u_k(x)
+ = \frac{1}{L} \frac{  \sin(\frac{\pi}{L} x (2k_N +1))  }{\sin(\frac{\pi}{L}x)}
+ \label{eq:wlow}
+\end{equation}
+From equation (\ref{eq:wlow}) we see that $\Wlow$ is a distribution
+which wiggles and decays slowly as we go further from the origin,
+see figure \ref{fig:wdelta}.
+\begin{figure}
+    \centering\includegraphics[width=.7\hsize]{./plots/delta-W.pdf}
+    \caption{The low-pass filter $\Wlow$ for $N=64$ and $L=1$.}
+    \label{fig:wdelta}
+\end{figure}
+Having as consequence that in order to sample the density field $\rho_o$
+we would need to add the contribution
+of every particle at every grid point, leading to an 
+algorithmic complexity, for a 1-dimesional grid, of $\mathcal{O}(N_p \cdot N)$, which is not feasible
+since usually one chooses $N$ to be as big as the memory permits and that's roughly $N\approx N_p$.
+
+To lower the complexity to $\mathcal{O}(N_p)$ one needs to approximate 
+the density field produced by a point particle to a distribution with a compact support
+such as: nearest-grid-point (NGP), cloud-in-cell (CIC), triangular-shaped-cloud (TSC)
+or a piecewise-cubic-spline (PCS), see \cite{sefusatti} and \cite{hockney}.
+\begin{equation}
+    W^{\text{NGP}}(s L/N) = 
+    \frac{N}{L} \times
+    \begin{cases} 
+        1, & |s|< 1/2 \\
+        0, &\text{otherwise}
+    \end{cases}
+\end{equation}
+\begin{equation}
+    W^{\text{CIC}}(s L/N) = 
+    \frac{N}{L} \times
+    \begin{cases} 
+        1-|s|, & |s|< 1 \\
+        0, &\text{otherwise}
+    \end{cases}
+\end{equation}
+\begin{equation}
+    W^{\text{TSC}}(s L/N) = 
+    \frac{N}{L} \times
+    \begin{cases} 
+        3/4 - s^2, & |s|< 1/2 \\
+        \frac{1}{2}(3/2 - |s|)^2, & 1/2 \le |s|< 3/2 \\
+        0, &\text{otherwise}
+    \end{cases}
+\end{equation}
+\begin{equation}
+    W^{\text{PCS}}(s L/N) = 
+    \frac{N}{L} \times
+    \begin{cases} 
+        \frac{1}{6}(4-6s^2+3|s|^3), & |s|< 1 \\
+        \frac{1}{6}(2-|s|)^3, & 1\le |s| <2 \\
+        0, &\text{otherwise}
+    \end{cases}
+\end{equation}
+in all cases the prefactor ensures that $\int_{-L/2}^{L/2} dx W(x)  =1$.
+
+The only objection I have to those filters is the presence of non-negligible
+modes higher than $k_N$. See for instance in
+the Table \ref{tab:wfilters} what happens if we apply $\Wlow$ to
+NGP, CIC, TSC, PCS and finally to a gaussian shape with $\sigma = L/N$.
+See also the power spectrum of all proposed filters in figure \ref{fig:pk}.
+That means two things:
+\begin{enumerate}
+    \item The filters NGP, CIC, TSC and PCS though they might be good
+    to reduce the non-locality of a density function for every particle,
+    they will introduce aliasing effects when sampled because
+    they present non-negligible mode amplitudes for $|k|>k_N$,
+    \item the gaussian filter doesn't have a compact support
+    but at $k_N$ and beyond the modes are suppressed and 
+    the condition for theorem \ref{th:nyquist} is approximately satisfied,
+    so there will be a very small aliasing effect.
+\end{enumerate}
+
+{\centering%
+\begin{table}
+    \begin{tabular}{cc}
+        \begin{subfigure}{.5\textwidth}
+            \centering\includegraphics[width=\columnwidth]{./plots/NGP-W.pdf}
+        \end{subfigure} &
+        \begin{subfigure}{.5\textwidth}
+            \centering\includegraphics[width=\columnwidth]{./plots/CIC-W.pdf}
+        \end{subfigure} \\
+        \begin{subfigure}{.5\textwidth}
+            \centering\includegraphics[width=\columnwidth]{./plots/TSC-W.pdf}
+        \end{subfigure} &
+        \begin{subfigure}{.5\textwidth}
+            \centering\includegraphics[width=\columnwidth]{./plots/PCS-W.pdf}
+        \end{subfigure} \\
+        \begin{subfigure}{.5\textwidth}
+            \centering\includegraphics[width=\columnwidth]{./plots/gaussian-W.pdf}
+        \end{subfigure} &
+        \begin{subfigure}{.5\textwidth}
+        \end{subfigure} \\
+    \end{tabular}
+    \caption{Different sampling kernels at $N=64$, with a boxsize $L=1$.
+    The shape of the kernel and its convolution with a low-pass filter
+    are compared. The gaussian shape changes only slightly.}
+    \label{tab:wfilters}
+\end{table}
+}
+\begin{figure}
+    \centering\includegraphics[width=.7\hsize]{./plots/pk.pdf}
+    \caption{Different sampling kernels at $N=64$. The gaussian
+    modes decay exponentially.}
+    \label{fig:pk}
+\end{figure}
+
+
+In fact for the gaussian filter
+\begin{equation}
+    W^{\text{G}}(x) = 
+    \frac{1}{\sqrt{2\pi \sigma^2}} \exp\left(-\frac{x^2}{2\sigma^2}\right),
+\end{equation}
+we can compute exactly the modes amplitude
+\begin{equation}
+    \langle u_k, W^{\text{G}} \rangle = 
+    \frac{1}{L} \exp\left(-\frac{k^2}{2\eta^2}\right),
+\end{equation}
+where $\sigma \eta = \frac{L}{2\pi}$.
+Then the bigger $\sigma$ the better the approximation 
+$\Wlow * W^G = W^G$, since $\eta$ becomes smaller,
+however there will be an increase in the non-locality 
+of a single particle density field and thus the computational
+cost of sampling.
+To ilustrate this point we can parametrize $\sigma = \alpha \frac{L}{N}$
+and consequently we get $\eta = \frac{N}{2\pi \alpha}$.
+Then the amplitude of the $k_N$ mode with relative to $k=0$
+becomes:
+\begin{equation}
+    \frac{\langle u_{k_N}, W^G \rangle}{ \langle u_0, W^G \rangle}
+    \approx \exp\left( -\frac{\pi^2 \alpha^2}{2} \right),
+\end{equation}
+while the amplitude of $W^G$ at grid point $x_n$ relative to $x_0$
+becomes
+\begin{equation}
+    \frac{W^G(x_n)}{W^G(0)}
+    = \exp\left( -\frac{n^2}{ 2 \alpha^2} \right),
+\end{equation}
+For $\alpha=1$ we have
+\begin{align}
+\begin{split}
+    \frac{\langle u_{k_N}, W^G \rangle}{ \langle u_0, W^G \rangle} 
+        &\approx 7\times 10^{-3}, \\
+    \frac{W^G(x_4)}{W^G(0)} 
+        &\approx 3\times 10^{-4},
+\end{split}
+\end{align}
+So I guess Theorem \ref{th:nyquist} can be used safe from aliasing
+and we can sample for every particle its gaussian density field 
+at $3\times 2 =6$ nearest grid points without problems.
+In fact if we apply a cut-off to $W^G$ for $n > 4$ we get the
+spectrum show in figure \ref{fig:pkgausscut} and
+its convolution with $\Wlow$ in figure \ref{fig:wlowgausscut}.
+
+\begin{figure}
+    \centering\includegraphics[width=.7\hsize]{./plots/pk-gauss-cut.pdf}
+    \caption{Power spectrum ($N=64$) 
+    of the gaussian filter with cut-off for $n>4$.}
+    \label{fig:pkgausscut}
+\end{figure}
+\begin{figure}
+    \centering\includegraphics[width=.7\hsize]{./plots/wlow-gauss-cut.pdf}
+    \caption{Convolution of the gaussian with cut-off for $n>4$ 
+    with a low-pass filter ($N=64$).}
+    \label{fig:wlowgausscut}
+\end{figure}

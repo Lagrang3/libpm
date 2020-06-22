@@ -1,0 +1,117 @@
+\section{Nyquist--Shannon theorem}
+
+\noindent Since we have mentioned it earlier,
+it is useful to take a look at Nyquist-Shannon theorem
+in a form consistent with the problem we are dealing here.
+
+\begin{theorem}[Nyquist-Shannon]
+    For any $f\in\H$ if there are no modes above $k_N$,
+    ie. $\langle u_k , f \rangle = 0$ for every $|k|>k_N$;
+    then $\langle u_k,f\rangle$ can be computed
+    by sampling $f$ at $N>2k_N$ equally spaced points:
+    $x_n = n \frac{L}{N}$, with $0\le n < N$.
+    \begin{equation}
+        \forall |k|\le k_N\colon
+        \langle u_k,f\rangle
+        = \frac{1}{N} \sum_{n=0}^{N-1} \omega^{-kn} f(x_n),
+        \label{eq:nyquist}
+    \end{equation}
+    where $\omega = \exp(i \frac{2\pi}{N})$.
+    In other words, $f$ is completely determined
+    by the value it takes at the points $\{ x_n \}_{n\in[0,N)}$
+    \label{th:nyquist}
+\end{theorem}
+In Theorem \ref{th:nyquist} we have deliverately written
+$k_N$ to indicate the so called \emph{Nyquist} mode,
+but also the fact that if $N$ is fixed beforehand,
+then we will need $f$ to have a mode cutoff at 
+$k_N = \lfloor \frac{N-1}{2} \rfloor$ in order for the theorem to remain valid.
+
+\begin{proof}
+    Let $f\in\H$ we can write:
+    \begin{equation}
+        f = \sum_{k\in\Z} \langle u_k,f\rangle\, u_k.
+        \label{eq:p1}
+    \end{equation}
+    Now let's define $\tilde f_l$, for $0\le l < N$, as the following sum:
+    \begin{equation}
+        \tilde f_l
+        = \frac{1}{N} \sum_{n=0}^{N-1} \omega^{-ln} f(x_n),
+    \end{equation}
+    then using the expansion (\ref{eq:p1}) we obtain:
+    \begin{equation}
+        \tilde f_l
+        = \frac{1}{N} \sum_{k\in\Z}\sum_{n=0}^{n-1} 
+            \omega^{-ln} u_{k}(x_n) \langle u_k, f\rangle
+        = \frac{1}{N} \sum_{k\in\Z} \sum_{n=0}^{n-1} 
+            (\omega^{k-l})^n \langle u_k, f\rangle,
+       \label{eq:p2}
+    \end{equation}
+    where we have used the fact that $u_k(x_n) = \omega^{kn}$.
+    Since $\omega$ is an $N$-root of unity we have that:
+    \begin{equation}
+        \frac{1}{N} \sum_{n=0}^{N-1} 
+            (\omega^{k-l})^n  = 
+            \begin{cases}
+                1, & k-l = zN, z\in\Z\\
+                0, & \text{otherwise}
+            \end{cases}
+    \end{equation}
+    and equation (\ref{eq:p2}) becomes:
+    \begin{equation}
+        \tilde f_l
+        = \sum_{z\in\Z} 
+           \langle u_{l + zN}, f\rangle.
+        \label{eq:p3}
+    \end{equation}
+    Each one of the terms $\langle u_{l+zN},f\rangle$ is an \emph{alias}
+    of $\tilde f_l$, and the fact that there can be
+    multiple non-zero aliases, leads to the \emph{aliasing} phenomenon.
+    If all non-zero modes of $f$ lie in the interval $[-k_N,k_N]$
+    with $N-k_N > k_N$, ie. $N > 2k_N$, then for every $l\in [0,N)$
+    there is at most one non-zero alias.
+    \begin{equation}
+        \tilde f_l
+        = 
+        \begin{cases}
+            \langle u_l, f \rangle, & 0\le l \le k_N \\
+            \langle u_{l-N}, f \rangle, & N - k_N\le l < N \\
+            0, & k_N <  l < N-k_N \\
+        \end{cases}
+    \end{equation}
+    Conversely for every $k\in[-k_N,k_N]$ we are able to find 
+    a finite sampling sum that computes it:
+    \begin{equation}
+        \langle u_k, f \rangle
+        = 
+        \begin{cases}
+            \tilde f_k, & 0\le k \le k_N \\
+            \tilde f_{k+N}, & - k_N\le k < 0 \\
+        \end{cases}
+        \label{eq:p4}
+    \end{equation}
+    Due to the fact that $\omega^{N}=1$, equation (\ref{eq:nyquist})
+    and the statement of the Theorem follows from~(\ref{eq:p4}).
+\end{proof}
+
+If the mass density $\rho$ field had no modes greater than $k_N$
+for a fixed grid size $N$, then we would have an exact representation
+of $\rho$ once we sample it at the points of the grid $\{ x_i \}_{i\in[0,N)}$,
+according to the Theorem \ref{th:nyquist}.
+Then using the potential field $\phi$ that satisfies
+the Poisson equation:
+\begin{equation}
+    \nabla^2 \phi = 4\pi\rho,
+    \label{eq:poisson}
+\end{equation}
+can be determined from its Fourier coefficients; ie. by expanding
+in Fourier series both sides of equation (\ref{eq:poisson}):
+\begin{equation}
+    \left(i \frac{2\pi}{L} |\vec k| \right)^2\tilde\phi_k = 4\pi \tilde\rho_k,
+\end{equation}
+and further on the force field from the relation $\vec F = -\nabla \phi$:
+\begin{equation}
+    \tilde {\vec F}_k = -\left(i \frac{2\pi}{L} \vec k \right)\tilde\phi_k
+     = - i \frac{2\pi}{L} \vec k\frac{4\pi\tilde\rho_k}{\left(i \frac{2\pi}{L} |\vec k| \right)^2},
+\end{equation}
+
