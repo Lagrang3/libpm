@@ -68,4 +68,22 @@ namespace PM
             return norm_factor * (s < 1.0 ? r1 : (s < 2.0 ? r2 * r2 * r2 : 0));
         }
     };
+
+    template <int k_max>
+    class LowPass_filter
+    {
+       public:
+        constexpr static int int_width = 0;
+        constexpr static double width = int_width / 2;
+
+        double operator()(double x) const
+        {
+            if (std::fabs(x) < 1e-4)
+                return 2 * k_max + 1;
+
+            double num = sin(pi * x * (2 * k_max + 1)), den = sin(pi * x);
+
+            return num / den;
+        }
+    };
 };  // namespace PM

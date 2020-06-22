@@ -105,7 +105,9 @@ namespace PM
             {
                 auto xo = pos[d] * N;
                 lower_corner[d] = std::ceil(xo - dx);
-                upper_corner[d] = lower_corner[d] + filter_t::int_width;
+                upper_corner[d] =
+                    lower_corner[d] +
+                    (filter_t::int_width > 0 ? filter_t::int_width : size());
             }
             return grid<dim, T, sampler_t, interpolator_t>::range(
                 *this, lower_corner, upper_corner);
@@ -121,7 +123,9 @@ namespace PM
             {
                 auto xo = pos[d] * N;
                 lower_corner[d] = std::ceil(xo - dx);
-                upper_corner[d] = lower_corner[d] + filter_t::int_width;
+                upper_corner[d] =
+                    lower_corner[d] +
+                    (filter_t::int_width > 0 ? filter_t::int_width : size());
             }
             return grid<dim, T, sampler_t, interpolator_t>::const_range(
                 *this, lower_corner, upper_corner);
@@ -133,15 +137,14 @@ namespace PM
         {
             filter_t W;
             const size_t N = size();
-            std::array<std::array<double, sampler_t::int_width>, dim> Wval;
+            std::array<std::vector<double>, dim> Wval;
 
             for (uint d = 0; d < dim; ++d)
             {
                 auto xo = pos[d] * N;
-                for (int i = index_range.start(d), j = 0;
-                     i < index_range.stop(d); ++i, ++j)
+                for (int i = index_range.start(d); i < index_range.stop(d); ++i)
                 {
-                    Wval[d][j] = W(xo - i);
+                    Wval[d].push_back(W(xo - i));
                 }
             }
             return Wval;
