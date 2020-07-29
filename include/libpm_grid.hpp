@@ -75,34 +75,12 @@ namespace PM
             }
         }
 
-        void sample_density(const std::vector<T>& Position)
+        auto get_index_range(const std::array<T, dim>& pos,
+                             const int int_width = 0,
+                             const double width = 0)
         {
-            for (size_t p = 0; p < Position.size(); p += dim)
-            {
-                std::array<T, dim> pos;
-                std::copy(&Position[p], &Position[p + dim], pos.begin());
-
-                auto index_range = get_index_range<sampler_t>(pos);
-                auto Wval = get_weights<sampler_t>(index_range, pos);
-
-                for (auto i = index_range.begin(); i != index_range.end(); ++i)
-                {
-                    double W = 1;
-                    for (uint d = 0; d < dim; ++d)
-                        W *= Wval[d][i.count(d)];
-
-                    *i += std::complex<double>(W, 0);
-                }
-            }
-        }
-
-        template <class filter_t>
-        auto get_index_range(const std::array<T, dim>& pos)
-        {
-            const T dx =
-                filter_t::int_width > 0 ? filter_t::width : size() * 0.5;
-            const int dN =
-                filter_t::int_width > 0 ? filter_t::int_width : size();
+            const T dx = int_width > 0 ? width : size() * 0.5;
+            const int dN = int_width > 0 ? int_width : size();
             const size_t N = size();
             std::array<int, dim> lower_corner, upper_corner;
 
@@ -115,13 +93,12 @@ namespace PM
             return grid<dim, T, sampler_t, interpolator_t>::range(
                 *this, lower_corner, upper_corner);
         }
-        template <class filter_t>
-        auto get_index_range(const std::array<T, dim>& pos) const
+        auto get_index_range(const std::array<T, dim>& pos,
+                             const int int_width = 0,
+                             const double width = 0) const
         {
-            const T dx =
-                filter_t::int_width > 0 ? filter_t::width : size() * 0.5;
-            const int dN =
-                filter_t::int_width > 0 ? filter_t::int_width : size();
+            const T dx = int_width > 0 ? width : size() * 0.5;
+            const int dN = int_width > 0 ? int_width : size();
             const size_t N = size();
             std::array<int, dim> lower_corner, upper_corner;
 
@@ -241,7 +218,8 @@ namespace PM
         /* knowing the field in the grid, interpolate to any point in the box */
         double interpolate(const std::array<T, dim> pos) const
         {
-            auto index_range = get_index_range<interpolator_t>(pos);
+            auto index_range = get_index_range(pos, interpolator_t::int_width,
+                                               interpolator_t::width);
             auto Wval = get_weights<interpolator_t>(index_range, pos);
 
             // std::cerr << "Interpolate at " << pos[0] << "\n";
@@ -292,6 +270,73 @@ namespace PM
             fftw_execute(plan_inv);  // phi_k -> phi_x
 
             compute_force(Force, Position, 1.0 / size());
+        }
+
+        /*
+            compute the fourier transform on the current grid.
+        */
+        void fft()
+        {
+            fftw_execute(plan);  // rho_x -> rho_k
+        }
+
+        /*
+            samples a density field from
+            a sum of dirac deltas
+        */
+        void sample_density(const std::vector<T>& Position)
+        {
+            for (size_t p = 0; p < Position.size(); p += dim)
+            {
+                std::array<T, dim> pos;
+                std::copy(&Position[p], &Position[p + dim], pos.begin());
+
+                auto index_range = get_index_range(pos, sampler_t::int_width,
+                                                   sampler_t::width);
+                auto Wval = get_weights<sampler_t>(index_range, pos);
+
+                for (auto i = index_range.begin(); i != index_range.end(); ++i)
+                {
+                    double W = 1;
+                    for (uint d = 0; d < dim; ++d)
+                        W *= Wval[d][i.count(d)];
+
+                    *i += std::complex<double>(W, 0);
+                }
+            }
+        }
+
+        /*
+            compute the amplitude of the modes
+            on the grid
+        */
+        auto get_modes() const
+        {
+            const int k_max = size() / 2;
+            std::vector<T> modes(k_max, 0);
+            std::vector<int> count(k_max, 0);
+            std::array<double, dim> center;
+
+            std::fill(center.begin(), center.end(), 0);
+
+            auto index_range = get_index_range(center);
+
+            for (auto i = index_range.begin(); i != index_range.end(); ++i)
+            {
+                double k = 0;
+                for (int d = 0; d < dim; ++d)
+                    k += i._state[d] * i._state[d];
+                size_t idx = int(sqrt(k));
+                if (idx < modes.size())
+                {
+                    modes[idx] += std::abs(*i);
+                    count[idx]++;
+                }
+            }
+
+            for (int i = 0; i < k_max; ++i)
+                modes[i] /= (count[i] > 0 ? count[i] : 1);
+            return modes;
         }
 
         ~grid()

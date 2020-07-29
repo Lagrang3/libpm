@@ -3,6 +3,7 @@ Example: Interpolation on 1-dimension
 
 This example tests the basic interface of the 
 grid class and the filters defined in libpm.
+Particularly the interpolation routines.
 A function *F* in 1-dimension in the interval [0,1]
 is sampled by a grid of size *N*, then 
 *M* points are requested from the grid

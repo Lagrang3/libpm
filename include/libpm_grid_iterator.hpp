@@ -8,6 +8,8 @@ namespace PM
               class interpolator_t /* interpolating filter */>
     class grid<dim, T, sampler_t, interpolator_t>::const_iterator
     {
+        friend class grid<dim, T, sampler_t, interpolator_t>;
+
        protected:
         const const_range& parent_range;
         const grid& parent_grid;
@@ -64,6 +66,8 @@ namespace PM
               class interpolator_t /* interpolating filter */>
     class grid<dim, T, sampler_t, interpolator_t>::iterator
     {
+        friend class grid<dim, T, sampler_t, interpolator_t>;
+
        protected:
         const range& parent_range;
         grid& parent_grid;
