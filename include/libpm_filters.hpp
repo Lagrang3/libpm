@@ -11,7 +11,7 @@ namespace PM
 
        public:
         constexpr static int int_width = 8;
-        constexpr static double width = int_width / 2;
+        constexpr static double width = int_width *0.5 ;
 
         double operator()(double x) const
         {
@@ -22,8 +22,8 @@ namespace PM
     class NGP_filter
     {
        public:
-        constexpr static int int_width = 1;
-        constexpr static double width = int_width / 2;
+        constexpr static int int_width = 2;
+        constexpr static double width = int_width *0.5 ;
 
         double operator()(double x) const { return std::abs(x) < 0.5 ? 1 : 0; }
     };
@@ -32,7 +32,7 @@ namespace PM
     {
        public:
         constexpr static int int_width = 2;
-        constexpr static double width = int_width / 2;
+        constexpr static double width = int_width *0.5 ;
 
         double operator()(double x) const
         {
@@ -44,7 +44,7 @@ namespace PM
     {
        public:
         constexpr static int int_width = 3;
-        constexpr static double width = int_width / 2;
+        constexpr static double width = int_width *0.5 ;
 
         double operator()(double x) const
         {
@@ -59,7 +59,7 @@ namespace PM
 
        public:
         constexpr static int int_width = 4;
-        constexpr static double width = int_width / 2;
+        constexpr static double width = int_width *0.5 ;
 
         double operator()(double x) const
         {
@@ -69,21 +69,27 @@ namespace PM
         }
     };
 
-    template <int k_max>
+    template <int k_max,int N>
     class LowPass_filter
     {
        public:
         constexpr static int int_width = 0;
-        constexpr static double width = int_width / 2;
+        constexpr static double width = int_width *.5;
 
         double operator()(double x) const
         {
-            if (std::fabs(x) < 1e-4)
-                return 2 * k_max + 1;
+            const double iN = 1.0 / N;
+            double s = iN * x * pi;
+            
+            if (std::fabs(s) < 1e-4)
+                return iN*(2*k_max+1);
 
-            double num = sin(pi * x * (2 * k_max + 1)), den = sin(pi * x);
+            double num = sin(s * (2 * k_max + 1)), den = sin(s);
 
-            return num / den;
+            return num / den * iN;
         }
     };
+    
+    template<int N>
+    using Grid_filter = LowPass_filter<N/2,N> ;
 };  // namespace PM

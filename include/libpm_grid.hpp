@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <cassert>
 
 namespace PM
 {
@@ -28,7 +29,8 @@ namespace PM
         sampler_t W_in;
         interpolator_t W_out;
 
-        fftw_plan fft_plan, fft_plan_inv;
+        fftw_plan plan;
+        fftw_plan plan_inv;
 
         void compute_force(std::vector<T>& Force,
                            const std::vector<T>& Position,
@@ -97,17 +99,16 @@ namespace PM
         template <class filter_t>
         auto get_index_range(const std::array<T, dim>& pos)
         {
-            const T dx = filter_t::width;
+            const T dx = filter_t::int_width > 0 ? filter_t::width : size()*0.5 ;
+            const int dN = filter_t::int_width > 0 ? filter_t::int_width : size() ;
             const size_t N = size();
             std::array<int, dim> lower_corner, upper_corner;
 
             for (uint d = 0; d < dim; ++d)
             {
                 auto xo = pos[d] * N;
-                lower_corner[d] = std::ceil(xo - dx);
-                upper_corner[d] =
-                    lower_corner[d] +
-                    (filter_t::int_width > 0 ? filter_t::int_width : size());
+                lower_corner[d] = std::ceil(xo - dx) ;
+                upper_corner[d] = lower_corner[d] + dN;
             }
             return grid<dim, T, sampler_t, interpolator_t>::range(
                 *this, lower_corner, upper_corner);
@@ -115,17 +116,16 @@ namespace PM
         template <class filter_t>
         auto get_index_range(const std::array<T, dim>& pos) const
         {
-            const T dx = filter_t::width;
+            const T dx = filter_t::int_width > 0 ? filter_t::width : size()*0.5 ;
+            const int dN = filter_t::int_width > 0 ? filter_t::int_width : size() ;
             const size_t N = size();
             std::array<int, dim> lower_corner, upper_corner;
 
             for (uint d = 0; d < dim; ++d)
             {
                 auto xo = pos[d] * N;
-                lower_corner[d] = std::ceil(xo - dx);
-                upper_corner[d] =
-                    lower_corner[d] +
-                    (filter_t::int_width > 0 ? filter_t::int_width : size());
+                lower_corner[d] = std::ceil(xo - dx) ;
+                upper_corner[d] = lower_corner[d] + dN;
             }
             return grid<dim, T, sampler_t, interpolator_t>::const_range(
                 *this, lower_corner, upper_corner);
@@ -151,6 +151,8 @@ namespace PM
         }
 
        public:
+        grid() = delete;
+       
         grid(size_t sz)
             : _size{sz}, kN{(sz - 1) / 2}, _data(_size * _size * _size)
         {
@@ -159,31 +161,31 @@ namespace PM
             switch (dim)
             {
                 case 3:
-                    fft_plan = fftw_plan_dft_3d(
+                    plan = fftw_plan_dft_3d(
                         N, N, N, reinterpret_cast<fftw_complex*>(&_data[0]),
                         reinterpret_cast<fftw_complex*>(&_data[0]),
-                        FFTW_FORWARD, FFTW_ESTIMATE);
-                    fft_plan_inv = fftw_plan_dft_3d(
+                      FFTW_FORWARD, FFTW_ESTIMATE);
+                    plan_inv = fftw_plan_dft_3d(
                         N, N, N, reinterpret_cast<fftw_complex*>(&_data[0]),
                         reinterpret_cast<fftw_complex*>(&_data[0]),
                         FFTW_BACKWARD, FFTW_ESTIMATE);
                     break;
                 case 2:
-                    fft_plan = fftw_plan_dft_2d(
+                    plan = fftw_plan_dft_2d(
                         N, N, reinterpret_cast<fftw_complex*>(&_data[0]),
                         reinterpret_cast<fftw_complex*>(&_data[0]),
                         FFTW_FORWARD, FFTW_ESTIMATE);
-                    fft_plan_inv = fftw_plan_dft_2d(
+                    plan_inv = fftw_plan_dft_2d(
                         N, N, reinterpret_cast<fftw_complex*>(&_data[0]),
                         reinterpret_cast<fftw_complex*>(&_data[0]),
                         FFTW_BACKWARD, FFTW_ESTIMATE);
                     break;
                 case 1:
-                    fft_plan = fftw_plan_dft_1d(
+                    plan = fftw_plan_dft_1d(
                         N, reinterpret_cast<fftw_complex*>(&_data[0]),
                         reinterpret_cast<fftw_complex*>(&_data[0]),
                         FFTW_FORWARD, FFTW_ESTIMATE);
-                    fft_plan_inv = fftw_plan_dft_1d(
+                    plan_inv = fftw_plan_dft_1d(
                         N, reinterpret_cast<fftw_complex*>(&_data[0]),
                         reinterpret_cast<fftw_complex*>(&_data[0]),
                         FFTW_BACKWARD, FFTW_ESTIMATE);
@@ -198,6 +200,7 @@ namespace PM
         /* at function, accepts negative values in the input */
         auto& at(std::array<int, dim> pos)
         {
+            
             auto modulo = [](int x, int y) {
                 int r = x % y;
                 return r < 0 ? r + std::abs(y) : r;
@@ -205,10 +208,11 @@ namespace PM
             const auto N = size();
 
             size_t index = 0;
-            for (uint d = dim - 1; d >= 0; --d)
+            for (int d = dim - 1; d >= 0; --d)
             {
                 index = index * N + modulo(pos[d], N);
             }
+            assert(index>=0 and index<_data.size());
             return _data[index];
         }
         const auto& at(std::array<int, dim> pos) const
@@ -220,10 +224,11 @@ namespace PM
             const auto N = size();
 
             size_t index = 0;
-            for (uint d = dim - 1; d >= 0; --d)
+            for (int d = dim - 1; d >= 0; --d)
             {
                 index = index * N + modulo(pos[d], N);
             }
+            assert(index>=0 and index<_data.size());
             return _data[index];
         }
 
@@ -235,6 +240,11 @@ namespace PM
         {
             auto index_range = get_index_range<interpolator_t>(pos);
             auto Wval = get_weights<interpolator_t>(index_range, pos);
+            
+            //std::cerr << "Interpolate at " << pos[0] << "\n";
+            //std::cerr << "index range: " << index_range.start(0) << " - " << index_range.stop(0) << "\n";
+            
+            
 
             double answer = 0;
             for (auto i = index_range.begin(); i != index_range.end(); ++i)
@@ -242,9 +252,16 @@ namespace PM
                 double W = 1;
                 for (uint d = 0; d < dim; ++d)
                     W *= Wval[d][i.count(d)];
-
+               // double dist = i.count(0) + index_range.start(0)- pos[0] * size();
+               // W = interpolator_t{}( dist/size() );
                 answer += W * (*i).real();
+                
+                //std::cerr << " weight: " << W << '\n';
+                //std::cerr << " distan: " << dist << '\n';
             }
+            
+            //std::cerr << " answer: " << answer << '\n';
+            
             return answer;
         }
 
@@ -266,19 +283,19 @@ namespace PM
 
             sample_density(Position);
 
-            fftw_execute(fft_plan);  // rho_x -> rho_k
+            fftw_execute(plan);  // rho_x -> rho_k
 
             compute_potential();
 
-            fftw_execute(fft_plan_inv);  // phi_k -> phi_x
+            fftw_execute(plan_inv);  // phi_k -> phi_x
 
             compute_force(Force, Position, 1.0 / size());
         }
 
         ~grid()
         {
-            fftw_destroy_plan(fft_plan);
-            fftw_destroy_plan(fft_plan_inv);
+            fftw_destroy_plan(plan);
+            fftw_destroy_plan(plan_inv);
         }
     };
 }  // namespace PM

@@ -1,4 +1,5 @@
-project('libmesh','cpp', version: '0.0.1')
+project('libmesh','cpp', version: '0.0.1',
+    default_options: ['buildtype=debug'])
 
 subdir('include')
 
@@ -11,8 +12,9 @@ install_headers(libpm_headers)
 
 pkg.generate(libpm,description: 'C++ library for Particle-Mesh cosmological codes')
 
+examples_files=[]
 subdir('examples')
 
 if (_format.found())
-    run_target('format', command: [_format,'-i',mini_body_files,libpm_headers])
+    run_target('format', command: [_format,'-i',examples_files,libpm_headers])
 endif
