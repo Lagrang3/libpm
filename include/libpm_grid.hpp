@@ -2,13 +2,13 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <complex>
 #include <fftw3.h>
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <cassert>
 
 namespace PM
 {
@@ -99,15 +99,17 @@ namespace PM
         template <class filter_t>
         auto get_index_range(const std::array<T, dim>& pos)
         {
-            const T dx = filter_t::int_width > 0 ? filter_t::width : size()*0.5 ;
-            const int dN = filter_t::int_width > 0 ? filter_t::int_width : size() ;
+            const T dx =
+                filter_t::int_width > 0 ? filter_t::width : size() * 0.5;
+            const int dN =
+                filter_t::int_width > 0 ? filter_t::int_width : size();
             const size_t N = size();
             std::array<int, dim> lower_corner, upper_corner;
 
             for (uint d = 0; d < dim; ++d)
             {
                 auto xo = pos[d] * N;
-                lower_corner[d] = std::ceil(xo - dx) ;
+                lower_corner[d] = std::ceil(xo - dx);
                 upper_corner[d] = lower_corner[d] + dN;
             }
             return grid<dim, T, sampler_t, interpolator_t>::range(
@@ -116,15 +118,17 @@ namespace PM
         template <class filter_t>
         auto get_index_range(const std::array<T, dim>& pos) const
         {
-            const T dx = filter_t::int_width > 0 ? filter_t::width : size()*0.5 ;
-            const int dN = filter_t::int_width > 0 ? filter_t::int_width : size() ;
+            const T dx =
+                filter_t::int_width > 0 ? filter_t::width : size() * 0.5;
+            const int dN =
+                filter_t::int_width > 0 ? filter_t::int_width : size();
             const size_t N = size();
             std::array<int, dim> lower_corner, upper_corner;
 
             for (uint d = 0; d < dim; ++d)
             {
                 auto xo = pos[d] * N;
-                lower_corner[d] = std::ceil(xo - dx) ;
+                lower_corner[d] = std::ceil(xo - dx);
                 upper_corner[d] = lower_corner[d] + dN;
             }
             return grid<dim, T, sampler_t, interpolator_t>::const_range(
@@ -152,7 +156,7 @@ namespace PM
 
        public:
         grid() = delete;
-       
+
         grid(size_t sz)
             : _size{sz}, kN{(sz - 1) / 2}, _data(_size * _size * _size)
         {
@@ -164,7 +168,7 @@ namespace PM
                     plan = fftw_plan_dft_3d(
                         N, N, N, reinterpret_cast<fftw_complex*>(&_data[0]),
                         reinterpret_cast<fftw_complex*>(&_data[0]),
-                      FFTW_FORWARD, FFTW_ESTIMATE);
+                        FFTW_FORWARD, FFTW_ESTIMATE);
                     plan_inv = fftw_plan_dft_3d(
                         N, N, N, reinterpret_cast<fftw_complex*>(&_data[0]),
                         reinterpret_cast<fftw_complex*>(&_data[0]),
@@ -200,7 +204,6 @@ namespace PM
         /* at function, accepts negative values in the input */
         auto& at(std::array<int, dim> pos)
         {
-            
             auto modulo = [](int x, int y) {
                 int r = x % y;
                 return r < 0 ? r + std::abs(y) : r;
@@ -212,7 +215,7 @@ namespace PM
             {
                 index = index * N + modulo(pos[d], N);
             }
-            assert(index>=0 and index<_data.size());
+            assert(index >= 0 and index < _data.size());
             return _data[index];
         }
         const auto& at(std::array<int, dim> pos) const
@@ -228,7 +231,7 @@ namespace PM
             {
                 index = index * N + modulo(pos[d], N);
             }
-            assert(index>=0 and index<_data.size());
+            assert(index >= 0 and index < _data.size());
             return _data[index];
         }
 
@@ -240,11 +243,10 @@ namespace PM
         {
             auto index_range = get_index_range<interpolator_t>(pos);
             auto Wval = get_weights<interpolator_t>(index_range, pos);
-            
-            //std::cerr << "Interpolate at " << pos[0] << "\n";
-            //std::cerr << "index range: " << index_range.start(0) << " - " << index_range.stop(0) << "\n";
-            
-            
+
+            // std::cerr << "Interpolate at " << pos[0] << "\n";
+            // std::cerr << "index range: " << index_range.start(0) << " - " <<
+            // index_range.stop(0) << "\n";
 
             double answer = 0;
             for (auto i = index_range.begin(); i != index_range.end(); ++i)
@@ -252,16 +254,16 @@ namespace PM
                 double W = 1;
                 for (uint d = 0; d < dim; ++d)
                     W *= Wval[d][i.count(d)];
-               // double dist = i.count(0) + index_range.start(0)- pos[0] * size();
-               // W = interpolator_t{}( dist/size() );
+                // double dist = i.count(0) + index_range.start(0)- pos[0] *
+                // size(); W = interpolator_t{}( dist/size() );
                 answer += W * (*i).real();
-                
-                //std::cerr << " weight: " << W << '\n';
-                //std::cerr << " distan: " << dist << '\n';
+
+                // std::cerr << " weight: " << W << '\n';
+                // std::cerr << " distan: " << dist << '\n';
             }
-            
-            //std::cerr << " answer: " << answer << '\n';
-            
+
+            // std::cerr << " answer: " << answer << '\n';
+
             return answer;
         }
 
