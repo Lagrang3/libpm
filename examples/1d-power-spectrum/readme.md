@@ -10,7 +10,7 @@ A grid of size *N* is then used to sample
 those points and the power spectrum is computed.
 
 
-With *M=100'000* particles and a grid 
+With *M=10'000* particles and a grid 
 size *N=100*, the different sampling filters:
 - Nearest-grid-point (NGP),
 - Cloud-in-cell (CIC),
@@ -32,7 +32,6 @@ The Low-pass filter with *k_max=10* decays abruptly at *k=11* as expected.
 
 Case with *sigma=0.005*. 
 The Low-pass filter with *k_max=10* decays abruptly at *k=11* as expected.
-The NGP filter goes above the exact grid filter indicating aliasing.
 
 ![](./assets/all_sigma_0.005.png)
 

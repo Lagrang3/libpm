@@ -329,7 +329,7 @@ namespace PM
                 size_t idx = int(sqrt(k));
                 if (idx < modes.size())
                 {
-                    modes[idx] += std::abs(*i);
+                    modes[idx] += std::norm(*i);
                     count[idx]++;
                 }
             }
