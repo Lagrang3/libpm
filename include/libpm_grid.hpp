@@ -315,7 +315,7 @@ namespace PM
             const int k_max = size() / 2;
             std::vector<T> modes(k_max, 0);
             std::vector<int> count(k_max, 0);
-            std::array<double, dim> center;
+            std::array<T, dim> center;
 
             std::fill(center.begin(), center.end(), 0);
 

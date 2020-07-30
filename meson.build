@@ -1,5 +1,5 @@
 project('libmesh','cpp', version: '0.0.1',
-    default_options: ['buildtype=debug'])
+    default_options: ['optimization=3'])
 
 subdir('include')
 
