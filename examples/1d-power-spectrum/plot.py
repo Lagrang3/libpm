@@ -21,5 +21,5 @@ def plot_pw(name,funlist,subname):
     #plt.savefig(name+'_'+subname+'.png')
 
 if __name__=="__main__":
-    plot_pw('pw-random',['exact','ngp','cic','tsc','pcs','gauss','low_pass'],'all')
+    plot_pw('pw-random',['exact','ngp','cic','tsc','pcs','gauss'],'all')
 

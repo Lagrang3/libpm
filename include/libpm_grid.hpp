@@ -131,6 +131,25 @@ namespace PM
             return Wval;
         }
 
+        template <class filter_t>
+        auto filter_fft() const
+        {
+            const int N = size();
+            std::vector<std::complex<double>> Wk(N);
+            filter_t W;
+            for (int i = -N / 2; i <= N / 2; ++i)
+            {
+                Wk[(i + N) % N] = W(i);
+            }
+            fftw_plan filter_plan =
+                fftw_plan_dft_1d(N, reinterpret_cast<fftw_complex*>(&Wk[0]),
+                                 reinterpret_cast<fftw_complex*>(&Wk[0]),
+                                 FFTW_FORWARD, FFTW_ESTIMATE);
+            fftw_execute(filter_plan);
+            fftw_destroy_plan(filter_plan);
+            return Wk;
+        }
+
        public:
         grid() = delete;
 
@@ -337,6 +356,28 @@ namespace PM
             for (int i = 0; i < k_max; ++i)
                 modes[i] /= (count[i] > 0 ? count[i] : 1);
             return modes;
+        }
+
+        /*
+            Correction of Fourier modes
+            due to sampling window function.
+        */
+        void sample_correction()
+        {
+            std::array<T, dim> center;
+            std::fill(center.begin(), center.end(), 0);
+            auto index_range = get_index_range(center);
+            auto Wk = filter_fft<sampler_t>();
+            const int N = size();
+            for (auto i = index_range.begin(); i != index_range.end(); ++i)
+            {
+                std::complex<double> w = 1;
+                for (int d = 0; d < dim; ++d)
+                {
+                    w *= Wk[(i._state[d] + N) % N];
+                }
+                *i /= w;
+            }
         }
 
         ~grid()

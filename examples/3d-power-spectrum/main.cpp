@@ -41,6 +41,8 @@ void power_spectrum(const std::vector<float>& pos, std::string fname)
     mygrid.sample_density(pos);
     std::cout << "\tPerforming FFT\n";
     mygrid.fft();
+    std::cout << "\tPerforming mode correction\n";
+    mygrid.sample_correction();
     std::cout << "\tEvaluating the modes\n";
     auto modes = mygrid.get_modes();
     float fact = 3.0 / pos.size(), two_pi = 2 * acos(-1.0);
