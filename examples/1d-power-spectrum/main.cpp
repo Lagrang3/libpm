@@ -30,8 +30,10 @@ void power_spectrum(const std::vector<double>& pos, std::string fname)
     mygrid.sample_density(pos);
     mygrid.fft();
     auto modes = mygrid.get_modes();
-    double fact = 1.0/pos.size();fact*=fact;
-    for(auto &x : modes) x *= fact;
+    double fact = 1.0 / pos.size();
+    fact *= fact;
+    for (auto& x : modes)
+        x *= fact;
     write(modes, fname);
 }
 
