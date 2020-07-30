@@ -47,6 +47,6 @@ int main()
     power_spectrum<100, PM::TSC_filter>(pos, "tsc");
     power_spectrum<100, PM::PCS_filter>(pos, "pcs");
     power_spectrum<100, PM::Gaussian_filter>(pos, "gauss");
-    //power_spectrum<100, PM::LowPass_filter<10, 100>>(pos, "low_pass");
+    // power_spectrum<100, PM::LowPass_filter<10, 100>>(pos, "low_pass");
     return 0;
 }
