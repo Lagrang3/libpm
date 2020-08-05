@@ -1,7 +1,8 @@
 project('libmesh','cpp', version: '0.0.1',
-    default_options: ['optimization=3'])
+    default_options: ['optimization=3','buildtype=release'])
 
 add_global_arguments('-Ofast',language: 'cpp')
+add_global_arguments('-DNDEBUG',language: 'cpp')
 subdir('include')
 
 _format = find_program('clang-format',required: false)
