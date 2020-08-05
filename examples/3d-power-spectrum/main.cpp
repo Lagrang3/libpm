@@ -1,3 +1,4 @@
+#include <chrono>
 #include <fstream>
 #include <gadget.hpp>
 #include <iostream>
@@ -31,20 +32,45 @@ auto get_positions()
     // return std::vector<double>(buff.begin(),buff.end());
     return buff;
 }
+struct timeit
+{
+    std::string message;
+    std::chrono::steady_clock::time_point start;
+
+    timeit(std::string mes)
+        : message(mes), start(std::chrono::steady_clock::now())
+    {
+    }
+    ~timeit()
+    {
+        auto dt = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - start);
+        std::cerr << "Timeit: " << message << " --> " << dt.count() << " ms\n";
+    }
+};
 
 template <int N, class filter_t>
 void power_spectrum(const std::vector<float>& pos, std::string fname)
 {
     std::cout << "Test Case " << fname << "\n";
     PM::grid<3, float, filter_t, PM::Grid_filter<N>> mygrid(N);
-    std::cout << "\tSampling density\n";
-    mygrid.sample_density(pos);
-    std::cout << "\tPerforming FFT\n";
-    mygrid.fft();
-    std::cout << "\tPerforming mode correction\n";
-    mygrid.sample_correction();
-    std::cout << "\tEvaluating the modes\n";
-    auto modes = mygrid.get_modes();
+    {
+        timeit T("sampling density");
+        mygrid.sample_density(pos);
+    }
+    {
+        timeit T("performing fft");
+        mygrid.fft();
+    }
+    {
+        timeit T("performing mode correction");
+        mygrid.sample_correction();
+    }
+    std::vector<float> modes;
+    {
+        timeit T("evaluating the modes");
+        modes = mygrid.get_modes();
+    }
     float fact = 3.0 / pos.size(), two_pi = 2 * acos(-1.0);
     fact *= fact / two_pi / two_pi / two_pi;
 
@@ -55,7 +81,11 @@ void power_spectrum(const std::vector<float>& pos, std::string fname)
 
 int main()
 {
-    auto pos = get_positions();
+    std::vector<float> pos;
+    {
+        timeit T("reading snapshot");
+        pos = get_positions();
+    }
     power_spectrum<256, PM::NGP_filter>(pos, "ngp");
     power_spectrum<256, PM::CIC_filter>(pos, "cic");
     power_spectrum<256, PM::TSC_filter>(pos, "tsc");
