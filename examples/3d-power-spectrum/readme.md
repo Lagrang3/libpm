@@ -19,3 +19,12 @@ is then compared with the power spectrum obtained
 using Sefusatti's code "Poweri4".
 
 ![](./assets/power-3d.png)
+
+Time in seconds:
+
+|interpolation order|Poweri4 interlacing (s)|Poweri4 no interlacing (s)|libpm (s)|
+|---|---|---|---|
+|1|2.484|1.964|2.181|
+|2|3.062|2.065|2.133|
+|3|5.214|2.734|2.827|
+|3|9.071|3.812|4.117|

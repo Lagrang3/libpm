@@ -113,22 +113,25 @@ namespace PM
         }
 
         template <class filter_t>
-        auto get_weights(const_range index_range,
-                         const std::array<T, dim>& pos) const
+        void get_weights(
+            std::array<std::array<double, filter_t::int_width>, dim>& Wval,
+            const_range index_range,
+            const std::array<T, dim>& pos) const
         {
             filter_t W;
             const size_t N = size();
-            std::array<std::vector<double>, dim> Wval;
+            // std::array<std::vector<double>, dim> Wval;
 
             for (uint d = 0; d < dim; ++d)
             {
                 auto xo = pos[d] * N;
-                for (int i = index_range.start(d); i < index_range.stop(d); ++i)
+                for (int i = index_range.start(d), c = 0;
+                     i < index_range.stop(d); ++i, ++c)
                 {
-                    Wval[d].push_back(W(xo - i));
+                    Wval[d][c] = W(xo - i);
                 }
             }
-            return Wval;
+            // return Wval;
         }
 
         template <class filter_t>
@@ -239,7 +242,8 @@ namespace PM
         {
             auto index_range = get_index_range(pos, interpolator_t::int_width,
                                                interpolator_t::width);
-            auto Wval = get_weights<interpolator_t>(index_range, pos);
+            std::array<std::array<double, interpolator_t::int_width>, dim> Wval;
+            get_weights<interpolator_t>(Wval, index_range, pos);
 
             // std::cerr << "Interpolate at " << pos[0] << "\n";
             // std::cerr << "index range: " << index_range.start(0) << " - " <<
@@ -305,6 +309,7 @@ namespace PM
         */
         void sample_density(const std::vector<T>& Position)
         {
+            std::array<std::array<double, sampler_t::int_width>, dim> Wval;
             for (size_t p = 0; p < Position.size(); p += dim)
             {
                 std::array<T, dim> pos;
@@ -312,7 +317,7 @@ namespace PM
 
                 auto index_range = get_index_range(pos, sampler_t::int_width,
                                                    sampler_t::width);
-                auto Wval = get_weights<sampler_t>(index_range, pos);
+                get_weights<sampler_t>(Wval, index_range, pos);
 
                 for (auto i = index_range.begin(); i != index_range.end(); ++i)
                 {
@@ -349,7 +354,7 @@ namespace PM
                 if (idx < modes.size())
                 {
                     modes[idx] += std::norm(*i);
-                    count[idx]++;
+                    ++count[idx];
                 }
             }
 

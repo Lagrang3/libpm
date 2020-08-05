@@ -30,7 +30,18 @@ namespace PM
         auto& operator++()
         {
             ++_count;
-            for (uint d = 0; d <= dim; ++d)
+
+            // this first iteration out the loop
+            // is done intentionally to gain some
+            // performance
+            ++_state[0];
+
+            if (_state[0] < parent_range._end[0])
+                return *this;
+
+            _state[0] = parent_range._init[0];
+
+            for (uint d = 1; d < dim; ++d)
             {
                 ++_state[d];
                 if (_state[d] < parent_range._end[d])
@@ -86,7 +97,18 @@ namespace PM
         auto& operator++()
         {
             ++_count;
-            for (uint d = 0; d <= dim; ++d)
+
+            // this first iteration out the loop
+            // is done intentionally to gain some
+            // performance
+            ++_state[0];
+
+            if (_state[0] < parent_range._end[0])
+                return *this;
+
+            _state[0] = parent_range._init[0];
+
+            for (uint d = 1; d < dim; ++d)
             {
                 ++_state[d];
                 if (_state[d] < parent_range._end[d])

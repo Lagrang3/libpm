@@ -73,7 +73,7 @@ namespace PM
     class LowPass_filter
     {
        public:
-        constexpr static int int_width = 0;
+        constexpr static int int_width = N;
         constexpr static double width = int_width * .5;
 
         double operator()(double x) const
