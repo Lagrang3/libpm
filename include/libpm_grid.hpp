@@ -113,22 +113,21 @@ namespace PM
         }
 
         template <class filter_t>
-        void get_weights(
-            std::array<std::array<double, filter_t::int_width>, dim>& Wval,
-            const_range index_range,
-            const std::array<T, dim>& pos) const
+        void get_weights(std::array<double, filter_t::int_width * dim>& Wval,
+                         const_range index_range,
+                         const std::array<T, dim>& pos) const
         {
             filter_t W;
             const size_t N = size();
             // std::array<std::vector<double>, dim> Wval;
 
-            for (uint d = 0; d < dim; ++d)
+            for (uint d = 0, c = 0; d < dim; ++d)
             {
                 auto xo = pos[d] * N;
-                for (int i = index_range.start(d), c = 0;
-                     i < index_range.stop(d); ++i, ++c)
+                for (int i = index_range.start(d); i < index_range.stop(d); ++i)
                 {
-                    Wval[d][c] = W(xo - i);
+                    assert(c >= 0 and c < Wval.size());
+                    Wval[c++] = W(xo - i);
                 }
             }
             // return Wval;
@@ -242,7 +241,7 @@ namespace PM
         {
             auto index_range = get_index_range(pos, interpolator_t::int_width,
                                                interpolator_t::width);
-            std::array<std::array<double, interpolator_t::int_width>, dim> Wval;
+            std::array<double, interpolator_t::int_width * dim> Wval;
             get_weights<interpolator_t>(Wval, index_range, pos);
 
             // std::cerr << "Interpolate at " << pos[0] << "\n";
@@ -254,7 +253,11 @@ namespace PM
             {
                 double W = 1;
                 for (uint d = 0; d < dim; ++d)
-                    W *= Wval[d][i.count(d)];
+                {
+                    uint idx = i.count(d) + d * interpolator_t::int_width;
+                    assert(idx >= 0 and idx < Wval.size());
+                    W *= Wval[idx];
+                }
                 // double dist = i.count(0) + index_range.start(0)- pos[0] *
                 // size(); W = interpolator_t{}( dist/size() );
                 answer += W * (*i).real();
@@ -309,7 +312,7 @@ namespace PM
         */
         void sample_density(const std::vector<T>& Position)
         {
-            std::array<std::array<double, sampler_t::int_width>, dim> Wval;
+            std::array<double, sampler_t::int_width * dim> Wval;
             for (size_t p = 0; p < Position.size(); p += dim)
             {
                 std::array<T, dim> pos;
@@ -323,8 +326,11 @@ namespace PM
                 {
                     double W = 1;
                     for (uint d = 0; d < dim; ++d)
-                        W *= Wval[d][i.count(d)];
-
+                    {
+                        uint idx = d * sampler_t::int_width + i.count(d);
+                        assert(idx >= 0 and idx < Wval.size());
+                        W *= Wval[idx];
+                    }
                     *i += std::complex<double>(W, 0);
                 }
             }
