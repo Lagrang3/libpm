@@ -8,11 +8,19 @@ endif
 
 subdir('include')
 
+cpp=meson.get_compiler('cpp')
+omp=dependency('openmp',required: false)
+tbb=dependency('tbb', required: false)
+pstl=dependency('pstl', required: false)
+
 _format = find_program('clang-format',required: false)
-fftw3 = dependency('fftw3')
+fftw3 = dependency('fftw3_omp')
 pkg=import('pkgconfig')
 
-libpm = library('libpm',libpm_headers,include_directories: libpm_include)
+libpm = library('libpm',libpm_headers,
+    include_directories: libpm_include,
+    dependencies: [fftw3,omp,tbb,pstl])
+    
 install_headers(libpm_headers)
 
 pkg.generate(libpm,description: 'C++ library for Particle-Mesh cosmological codes')

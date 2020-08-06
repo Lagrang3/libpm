@@ -10,10 +10,26 @@
 #include <string>
 #include <vector>
 
+#ifdef USING_TBB
+#    include <tbb/blocked_range.h>
+#    include <tbb/parallel_reduce.h>
+#endif
+
 #include "libpm_utilities.hpp"
 
 namespace PM
 {
+    /*
+    possible solution
+    template<class T>
+    class vector : public std::vector<T>
+    {
+        using std::vector<T>::vector;
+
+        vector& operator = (vector&& that) = delete;
+    };
+    */
+
     template <int dim /* dimension = 1,2,3 */,
               class T /* precision */,
               class sampler_t /* sampling filter  */,
@@ -31,6 +47,7 @@ namespace PM
 
         size_t _size, kN;
         data_vec_t _data;
+
         sampler_t W_in;
         interpolator_t W_out;
 
@@ -148,6 +165,9 @@ namespace PM
             {
                 Wk[(i + N) % N] = W(i);
             }
+#ifdef _OPENMP
+            fftw_plan_with_nthreads(6);
+#endif
             fftw_plan filter_plan =
                 fftw_plan_dft_1d(N, reinterpret_cast<fftw_complex*>(&Wk[0]),
                                  reinterpret_cast<fftw_complex*>(&Wk[0]),
@@ -161,10 +181,14 @@ namespace PM
         grid() = delete;
 
         // constructor
-        grid(size_t sz) : _size{sz}, kN{(sz - 1) / 2}, _data(power<dim>(_size))
+        grid(size_t sz)
+            : _size{sz}, kN{(sz - 1) / 2}, _data(PM::power<dim>(_size))
         {
             auto N = size();
 
+#ifdef _OPENMP
+            fftw_plan_with_nthreads(6);
+#endif
             switch (dim)
             {
                 case 3:
@@ -293,6 +317,58 @@ namespace PM
         */
         void sample_density(const std::vector<T>& Position)
         {
+#ifdef USING_TBB
+            auto result = tbb::parallel_reduce(
+                /* the range = */
+                tbb::blocked_range<size_t>(0, Position.size(), 1'000'000 * dim),
+
+                /* identity = */
+                data_vec_t(_data.size(), 0),
+
+                /* func = */
+                [&](const tbb::blocked_range<size_t>& r, data_vec_t local) {
+                    std::array<double, sampler_t::int_width * dim> Wval;
+
+                    for (auto p = r.begin(); p < r.end(); p += dim)
+                    {
+                        assert(p >= 0 and p + dim <= Position.size());
+                        std::array<T, dim> pos;
+                        std::copy(&Position[p], &Position[p + dim],
+                                  pos.begin());
+
+                        auto index_range = get_index_range(
+                            pos, local, sampler_t::int_width, sampler_t::width);
+                        get_weights<sampler_t>(Wval, index_range, pos);
+
+                        for (auto i = index_range.begin();
+                             i != index_range.end(); ++i)
+                        {
+                            double W = 1;
+                            for (uint d = 0; d < dim; ++d)
+                            {
+                                uint idx =
+                                    d * sampler_t::int_width + i.count(d);
+                                assert(idx >= 0 and idx < Wval.size());
+                                W *= Wval[idx];
+                            }
+
+                            *i += data_t(W, 0);
+                        }
+                    }
+                    return local;
+                },
+
+                /* reduction = */
+                [](data_vec_t a, const data_vec_t& b) {
+                    std::transform(a.begin(), a.end(), b.begin(), a.begin(),
+                                   std::plus<data_t>());
+                    return a;
+                }
+
+            );
+            std::copy(result.begin(), result.end(), _data.begin());
+
+#else
             std::array<double, sampler_t::int_width * dim> Wval;
             for (size_t p = 0; p < Position.size(); p += dim)
             {
@@ -315,6 +391,7 @@ namespace PM
                     *i += data_t(W, 0);
                 }
             }
+#endif
         }
 
         /*

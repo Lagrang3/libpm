@@ -1,3 +1,5 @@
+#define USING_TBB
+
 #include <chrono>
 #include <fstream>
 #include <gadget.hpp>
@@ -6,6 +8,11 @@
 #include <random>
 #include <string>
 #include <vector>
+
+#ifdef USING_TBB
+#    include <tbb/blocked_range.h>
+#    include <tbb/parallel_for.h>
+#endif
 
 template <class T>
 void write(std::vector<T>& modes, std::string fname)
@@ -18,6 +25,7 @@ void write(std::vector<T>& modes, std::string fname)
 
 auto get_positions()
 {
+    // gadget::isnapshot<1> snap("snap1");
     gadget::isnapshot<1> snap("newton_snap006_cdm");
     int npart = 0;
     for (int i = 0; i < gadget::PTYPES; ++i)
@@ -27,8 +35,20 @@ auto get_positions()
 
     snap.scan_block("POS ", buff.begin());
     float ilength = 1 / snap.header.get_BoxSize();
+
+#ifdef USING_TBB
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, buff.size(), 100'000),
+                      [ilength, &buff](const tbb::blocked_range<size_t>& r) {
+                          for (auto i = r.begin(); i != r.end(); ++i)
+                          {
+                              buff[i] *= ilength;
+                          }
+                      });
+#else
     for (auto& x : buff)
         x *= ilength;
+#endif
+
     // return std::vector<double>(buff.begin(),buff.end());
     return buff;
 }
@@ -81,6 +101,10 @@ void power_spectrum(const std::vector<float>& pos, std::string fname)
 
 int main()
 {
+#ifdef _OPENMP
+    std::cerr << "Initializing FFTW threads\n";
+    fftw_init_threads();
+#endif
     std::vector<float> pos;
     {
         timeit T("reading snapshot");

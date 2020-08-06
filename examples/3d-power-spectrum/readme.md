@@ -20,11 +20,13 @@ using Sefusatti's code "Poweri4".
 
 ![](./assets/power-3d.png)
 
-Time in seconds:
+Time to solution comparison, between Sefusattis code Poweri4 and
+libpm on a 6 core Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz.
 
-|interpolation order|Poweri4 interlacing (s)|Poweri4 no interlacing (s)|libpm (s)|
-|---|---|---|---|
-|1|2.505|1.857|2.058|
-|2|3.053|1.959|1.866|
-|3|5.457|2.590|2.424|
-|3|9.971|3.593|3.587|
+|interpolation order|Poweri4 interlacing (s)|Poweri4 no interlacing (s)|libpm (s)|libpm tbb (s)|
+|---|---|---|---|---|
+|1|2.505|1.857|2.058|1.223|
+|2|3.053|1.959|1.866|1.253|
+|3|5.457|2.590|2.424|1.564|
+|3|9.971|3.593|3.587|2.084|
+

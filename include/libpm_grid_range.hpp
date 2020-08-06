@@ -47,8 +47,16 @@ namespace PM
             return grid::const_iterator(*this, _end, num_elements);
         }
 
-        int start(uint d) const { return _init[d]; }
-        int stop(uint d) const { return _end[d]; }
+        int start(uint d) const
+        {
+            assert(d >= 0 and d < _init.size());
+            return _init[d];
+        }
+        int stop(uint d) const
+        {
+            assert(d >= 0 and d < _end.size());
+            return _end[d];
+        }
     };
 
     template <int dim /* dimension = 1,2,3 */,
@@ -85,7 +93,15 @@ namespace PM
         auto begin() { return grid::iterator{*this, _init, 0}; }
         auto end() { return grid::iterator{*this, _end, num_elements}; }
 
-        int start(uint d) const { return _init[d]; }
-        int stop(uint d) const { return _end[d]; }
+        int start(uint d) const
+        {
+            assert(d >= 0 and d < _init.size());
+            return _init[d];
+        }
+        int stop(uint d) const
+        {
+            assert(d >= 0 and d < _end.size());
+            return _end[d];
+        }
     };
 }  // namespace PM

@@ -24,3 +24,12 @@ Requirements
 - [`FFTW3`](http://fftw.org/)
 - [`libgadget`](https://github.com/Lagrang3/libgadget)
 
+Todo
+----
+
+- make an example with power spectrum using the
+snapshots taken during gevolution-gadget simulations
+and compare to seffusati
+- run the mini-body example
+- parallelize with threads
+- parallelize with mpi
