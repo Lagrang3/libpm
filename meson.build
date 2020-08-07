@@ -1,8 +1,11 @@
-project('libmesh','cpp', version: '0.0.1',
+project('libpm','cpp', version: '0.0.1',
     default_options: ['optimization=3','buildtype=release'])
 
-add_global_arguments('-Ofast',language: 'cpp')
-add_global_arguments('-DNDEBUG',language: 'cpp')
+if get_option('buildtype')=='release'
+    add_global_arguments('-Ofast',language: 'cpp')
+    add_global_arguments('-DNDEBUG',language: 'cpp')
+endif
+
 subdir('include')
 
 _format = find_program('clang-format',required: false)
