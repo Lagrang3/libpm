@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 
+#include "libpm_utilities.hpp"
+
 namespace PM
 {
     template <int dim /* dimension = 1,2,3 */,
@@ -155,8 +157,8 @@ namespace PM
        public:
         grid() = delete;
 
-        grid(size_t sz)
-            : _size{sz}, kN{(sz - 1) / 2}, _data(_size * _size * _size)
+        // constructor
+        grid(size_t sz) : _size{sz}, kN{(sz - 1) / 2}, _data(power<dim>(_size))
         {
             auto N = size();
 
@@ -202,10 +204,6 @@ namespace PM
         /* at function, accepts negative values in the input */
         auto& at(std::array<int, dim> pos)
         {
-            auto modulo = [](int x, int y) {
-                int r = x % y;
-                return r < 0 ? r + std::abs(y) : r;
-            };
             const auto N = size();
 
             size_t index = 0;
@@ -218,10 +216,6 @@ namespace PM
         }
         const auto& at(std::array<int, dim> pos) const
         {
-            auto modulo = [](int x, int y) {
-                int r = x % y;
-                return r < 0 ? r + std::abs(y) : r;
-            };
             const auto N = size();
 
             size_t index = 0;
@@ -385,7 +379,7 @@ namespace PM
                 std::complex<double> w = 1;
                 for (int d = 0; d < dim; ++d)
                 {
-                    w *= Wk[(i._state[d] + N) % N];
+                    w *= Wk[modulo(i._state[d], N)];
                 }
                 *i /= w;
             }
