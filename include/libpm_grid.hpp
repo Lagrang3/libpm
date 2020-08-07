@@ -20,6 +20,9 @@ namespace PM
               class interpolator_t /* interpolating filter */>
     class grid
     {
+        using data_t = std::complex<double>;
+        using data_vec_t = std::vector<data_t>;
+
         class range;
         class iterator;
 
@@ -27,7 +30,7 @@ namespace PM
         class const_iterator;
 
         size_t _size, kN;
-        std::vector<std::complex<double>> _data;
+        data_vec_t _data;
         sampler_t W_in;
         interpolator_t W_out;
 
@@ -139,7 +142,7 @@ namespace PM
         auto filter_fft() const
         {
             const int N = size();
-            std::vector<std::complex<double>> Wk(N);
+            data_vec_t Wk(N);
             filter_t W;
             for (int i = -N / 2; i <= N / 2; ++i)
             {
@@ -325,7 +328,7 @@ namespace PM
                         assert(idx >= 0 and idx < Wval.size());
                         W *= Wval[idx];
                     }
-                    *i += std::complex<double>(W, 0);
+                    *i += data_t(W, 0);
                 }
             }
         }
@@ -376,7 +379,7 @@ namespace PM
             const int N = size();
             for (auto i = index_range.begin(); i != index_range.end(); ++i)
             {
-                std::complex<double> w = 1;
+                data_t w = 1;
                 for (int d = 0; d < dim; ++d)
                 {
                     w *= Wk[modulo(i._state[d], N)];
