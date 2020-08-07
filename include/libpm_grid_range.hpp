@@ -13,15 +13,17 @@ namespace PM
         friend grid::const_iterator;
 
        protected:
-        const grid& parent_grid;
+        const data_vec_t& _data;
         std::array<int, dim> _init, _end;
         int64_t num_elements = 1;
+        size_t _size;
 
        public:
-        const_range(const grid& p,
+        const_range(const data_vec_t& data,
                     std::array<int, dim> init,
-                    std::array<int, dim> end)
-            : parent_grid{p}, _init{init}, _end{end}
+                    std::array<int, dim> end,
+                    size_t size)
+            : _data{data}, _init{init}, _end{end}, _size{size}
         {
             for (uint d = 0; d < dim; ++d)
             {
@@ -32,7 +34,7 @@ namespace PM
             }
         }
         const_range(range that)
-            : parent_grid{that.parent_grid},
+            : _data{that._data},
               _init{that._init},
               _end{that._end},
               num_elements{that.num_elements}
@@ -59,13 +61,17 @@ namespace PM
         friend grid::const_range;
 
        protected:
-        grid& parent_grid;
+        data_vec_t& _data;
         std::array<int, dim> _init, _end;
         int64_t num_elements = 1;
+        size_t _size;
 
        public:
-        range(grid& p, std::array<int, dim> init, std::array<int, dim> end)
-            : parent_grid{p}, _init{init}, _end{end}
+        range(data_vec_t& data,
+              std::array<int, dim> init,
+              std::array<int, dim> end,
+              size_t size)
+            : _data{data}, _init{init}, _end{end}, _size{size}
         {
             for (uint d = 0; d < dim; ++d)
             {

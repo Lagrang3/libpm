@@ -81,6 +81,7 @@ namespace PM
         }
 
         auto get_index_range(const std::array<T, dim>& pos,
+                             data_vec_t& data,
                              const int int_width = 0,
                              const double width = 0)
         {
@@ -95,12 +96,12 @@ namespace PM
                 lower_corner[d] = std::ceil(xo - dx);
                 upper_corner[d] = lower_corner[d] + dN;
             }
-            return grid<dim, T, sampler_t, interpolator_t>::range(
-                *this, lower_corner, upper_corner);
+            return range(data, lower_corner, upper_corner, size());
         }
         auto get_index_range(const std::array<T, dim>& pos,
+                             const data_vec_t& data,
                              const int int_width = 0,
-                             const double width = 0) const
+                             const double width = 0.) const
         {
             const T dx = int_width > 0 ? width : size() * 0.5;
             const int dN = int_width > 0 ? int_width : size();
@@ -113,8 +114,7 @@ namespace PM
                 lower_corner[d] = std::ceil(xo - dx);
                 upper_corner[d] = lower_corner[d] + dN;
             }
-            return grid<dim, T, sampler_t, interpolator_t>::const_range(
-                *this, lower_corner, upper_corner);
+            return const_range(data, lower_corner, upper_corner, size());
         }
 
         template <class filter_t>
@@ -207,27 +207,11 @@ namespace PM
         /* at function, accepts negative values in the input */
         auto& at(std::array<int, dim> pos)
         {
-            const auto N = size();
-
-            size_t index = 0;
-            for (int d = dim - 1; d >= 0; --d)
-            {
-                index = index * N + modulo(pos[d], N);
-            }
-            assert(index >= 0 and index < _data.size());
-            return _data[index];
+            return *range(_data, pos, pos, size()).begin();
         }
         const auto& at(std::array<int, dim> pos) const
         {
-            const auto N = size();
-
-            size_t index = 0;
-            for (int d = dim - 1; d >= 0; --d)
-            {
-                index = index * N + modulo(pos[d], N);
-            }
-            assert(index >= 0 and index < _data.size());
-            return _data[index];
+            return *const_range(_data, pos, pos, size()).begin();
         }
 
         size_t size() const { return _size; }
@@ -236,8 +220,8 @@ namespace PM
         /* knowing the field in the grid, interpolate to any point in the box */
         double interpolate(const std::array<T, dim> pos) const
         {
-            auto index_range = get_index_range(pos, interpolator_t::int_width,
-                                               interpolator_t::width);
+            auto index_range = get_index_range(
+                pos, _data, interpolator_t::int_width, interpolator_t::width);
             std::array<double, interpolator_t::int_width * dim> Wval;
             get_weights<interpolator_t>(Wval, index_range, pos);
 
@@ -315,8 +299,8 @@ namespace PM
                 std::array<T, dim> pos;
                 std::copy(&Position[p], &Position[p + dim], pos.begin());
 
-                auto index_range = get_index_range(pos, sampler_t::int_width,
-                                                   sampler_t::width);
+                auto index_range = get_index_range(
+                    pos, _data, sampler_t::int_width, sampler_t::width);
                 get_weights<sampler_t>(Wval, index_range, pos);
 
                 for (auto i = index_range.begin(); i != index_range.end(); ++i)
@@ -346,7 +330,7 @@ namespace PM
 
             std::fill(center.begin(), center.end(), 0);
 
-            auto index_range = get_index_range(center);
+            auto index_range = get_index_range(center, _data);
 
             for (auto i = index_range.begin(); i != index_range.end(); ++i)
             {
@@ -374,7 +358,7 @@ namespace PM
         {
             std::array<T, dim> center;
             std::fill(center.begin(), center.end(), 0);
-            auto index_range = get_index_range(center);
+            auto index_range = get_index_range(center, _data);
             auto Wk = filter_fft<sampler_t>();
             const int N = size();
             for (auto i = index_range.begin(); i != index_range.end(); ++i)

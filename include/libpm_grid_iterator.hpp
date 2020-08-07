@@ -12,18 +12,20 @@ namespace PM
 
        protected:
         const const_range& parent_range;
-        const grid& parent_grid;
+        const data_vec_t& _data;
         std::array<int, dim> _state;
         int64_t _count;
+        size_t _size;
 
        public:
         const_iterator(const const_range& p,
                        std::array<int, dim> init,
                        int64_t c)
             : parent_range{p},
-              parent_grid{p.parent_grid},
+              _data{p._data},
               _state{init},
-              _count{c}
+              _count{c},
+              _size{p._size}
         {
         }
 
@@ -67,7 +69,18 @@ namespace PM
             return not(*this == that);
         }
 
-        const auto& operator*() { return parent_grid.at(_state); }
+        const auto& operator*()
+        {
+            const auto N = _size;
+
+            size_t index = 0;
+            for (int d = dim - 1; d >= 0; --d)
+            {
+                index = index * N + modulo(_state[d], N);
+            }
+            assert(index >= 0 and index < _data.size());
+            return _data[index];
+        }
         int count(uint d) const { return _state[d] - parent_range._init[d]; }
     };
 
@@ -81,16 +94,18 @@ namespace PM
 
        protected:
         const range& parent_range;
-        grid& parent_grid;
+        data_vec_t& _data;
         std::array<int, dim> _state;
         int64_t _count;
+        size_t _size;
 
        public:
         iterator(const range& p, std::array<int, dim> init, int64_t c)
             : parent_range{p},
-              parent_grid{p.parent_grid},
+              _data{p._data},
               _state{init},
-              _count{c}
+              _count{c},
+              _size{p._size}
         {
         }
 
@@ -128,7 +143,18 @@ namespace PM
         bool operator==(iterator that) const { return _count == that._count; }
         bool operator!=(iterator that) const { return not(*this == that); }
 
-        auto& operator*() { return parent_grid.at(_state); }
+        auto& operator*()
+        {
+            const auto N = _size;
+
+            size_t index = 0;
+            for (int d = dim - 1; d >= 0; --d)
+            {
+                index = index * N + modulo(_state[d], N);
+            }
+            assert(index >= 0 and index < _data.size());
+            return _data[index];
+        }
         int count(uint d) const { return _state[d] - parent_range._init[d]; }
     };
 }  // namespace PM
