@@ -33,3 +33,4 @@ and compare to seffusati
 - run the mini-body example
 - parallelize with threads
 - parallelize with mpi
+- implement unit tests
