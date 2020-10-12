@@ -58,6 +58,7 @@ namespace PM
                            const std::vector<T>& Position,
                            const T dx) const
         {
+            std::cerr << "Compute force ...\n";
             const T dx_inv = 1.0 / dx;
             for (size_t p = 0; p < Force.size(); p += dim)
             {
@@ -78,6 +79,7 @@ namespace PM
 
         void compute_potential()
         {
+            std::cerr << "Compute potential ...\n";
             const int64_t k_max = k_nyquist(), N = size();
             auto index_to_k = [k_max, N](int64_t index) {
                 return (index <= k_max ? index : index - N);
@@ -242,7 +244,7 @@ namespace PM
         int k_nyquist() const { return kN; }
 
         /* knowing the field in the grid, interpolate to any point in the box */
-        double interpolate(const std::array<T, dim> pos) const
+        double interpolate(const std::array<T, dim> pos) const noexcept
         {
             auto index_range = get_index_range(
                 pos, _data, interpolator_t::int_width, interpolator_t::width);
@@ -283,6 +285,7 @@ namespace PM
         */
         void operator()(std::vector<T>& Force, const std::vector<T>& Position)
         {
+            std::cerr << "Force computation ...\n";
             if (Force.size() != Position.size())
                 throw std::runtime_error(std::string{__PRETTY_FUNCTION__} +
                                          ": Force.size() != Position.size()");
@@ -294,7 +297,7 @@ namespace PM
 
             sample_density(Position);
 
-            fftw_execute(plan);  // rho_x -> rho_k
+            fft();
 
             compute_potential();
 
@@ -308,6 +311,7 @@ namespace PM
         */
         void fft()
         {
+            std::cerr << "Executing FFT ...\n";
             fftw_execute(plan);  // rho_x -> rho_k
         }
 
@@ -317,6 +321,7 @@ namespace PM
         */
         void sample_density(const std::vector<T>& Position)
         {
+            std::cerr << "Sampling density ...\n";
 #ifdef USING_TBB
             auto result = tbb::parallel_reduce(
                 /* the range = */
@@ -400,6 +405,8 @@ namespace PM
         */
         auto get_modes() const
         {
+            std::cerr << "Counting modes ...\n";
+            
             const int k_max = size() / 2;
             std::vector<T> modes(k_max, 0);
             std::vector<int> count(k_max, 0);
@@ -433,6 +440,7 @@ namespace PM
         */
         void sample_correction()
         {
+            std::cerr << "Sample correction ...\n";
             std::array<T, dim> center;
             std::fill(center.begin(), center.end(), 0);
             auto index_range = get_index_range(center, _data);
