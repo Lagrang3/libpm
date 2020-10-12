@@ -1,7 +1,7 @@
+#include "error.hpp"
 #include "integration.hpp"
 #include "parser.hpp"
 #include "state.hpp"
-#include "error.hpp"
 #include <cmath>
 #include <iostream>
 #include <pm.hpp>
@@ -31,27 +31,25 @@ namespace po = boost::program_options;
 
 int main(int argc, char** argv)
 {
-    
-    try{
+    try
+    {
         // read command line options
         po::options_description usage("Allowed options");
-        usage.add_options()
-            ("help","produce help message")
-            ("paramfile",po::value<std::string>(),"parameter file");
-        
+        usage.add_options()("help", "produce help message")(
+            "paramfile", po::value<std::string>(), "parameter file");
+
         po::variables_map vm;
-        po::store(po::parse_command_line(argc,argv,usage),vm);
+        po::store(po::parse_command_line(argc, argv, usage), vm);
         po::notify(vm);
-        
-        if(vm.count("help") or vm.count("paramfile")==0)
+
+        if (vm.count("help") or vm.count("paramfile") == 0)
         {
             std::cerr << usage << '\n';
             return 1;
         }
-        
-        
+
         // read paramfile
-        ParamfileParser par_options( vm["paramfile"].as<std::string>() );
+        ParamfileParser par_options(vm["paramfile"].as<std::string>());
 
         mystate.BoxSize = std::stod(par_options["BoxSize"]);
         mystate.HubbleParam = std::stod(par_options["HubbleParam"]);
@@ -61,7 +59,7 @@ int main(int argc, char** argv)
         // read snapshot
         std::cout << "Reading snapshot file\n";
         mystate.read(par_options["Input"]);
-        
+
         // run from z_begin to z_end
         std::cout << "Initializing grid\n";
         PM::grid<3, float, PM::CIC_filter, PM::CIC_filter> mygrid(
@@ -77,13 +75,13 @@ int main(int argc, char** argv)
         std::cout << "Main loop\n";
         while (mystate.a < afinal)
         {
-            std::cout<< "    a: " << mystate.a 
-                << ", final a: " << afinal << std::endl;
+            std::cout << "    a: " << mystate.a << ", final a: " << afinal
+                      << std::endl;
             double dt = 0.001 / mystate.get_H();
 
             leapfrogKDK_evolve(mygrid, mystate, dt);
             mystate.advance_a(dt);
-            
+
             mystate.enforce_PBC();
         }
         std::cout << "done Main loop\n";
@@ -91,17 +89,16 @@ int main(int argc, char** argv)
         // output snapshot
         std::cout << "Writing output snapshot\n";
         mystate.write(par_options["Output"]);
-        
+
         return 0;
     }
-    catch(std::exception& e)
+    catch (std::exception& e)
     {
         std::cerr << "Exception! " << e.what() << '\n';
     }
-    catch(...)
+    catch (...)
     {
         std::cerr << "Unknown exception!\n";
-        
     }
     return 1;
 }

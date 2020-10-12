@@ -10,11 +10,6 @@
 #include <string>
 #include <vector>
 
-#ifdef USING_TBB
-#    include <tbb/blocked_range.h>
-#    include <tbb/parallel_reduce.h>
-#endif
-
 #include <pm/utilities.hpp>
 
 namespace PM
@@ -322,58 +317,6 @@ namespace PM
         void sample_density(const std::vector<T>& Position)
         {
             std::cerr << "Sampling density ...\n";
-#ifdef USING_TBB
-            auto result = tbb::parallel_reduce(
-                /* the range = */
-                tbb::blocked_range<size_t>(0, Position.size(), 1'000'000 * dim),
-
-                /* identity = */
-                data_vec_t(_data.size(), 0),
-
-                /* func = */
-                [&](const tbb::blocked_range<size_t>& r, data_vec_t local) {
-                    std::array<double, sampler_t::int_width * dim> Wval;
-
-                    for (auto p = r.begin(); p < r.end(); p += dim)
-                    {
-                        assert(p >= 0 and p + dim <= Position.size());
-                        std::array<T, dim> pos;
-                        std::copy(&Position[p], &Position[p + dim],
-                                  pos.begin());
-
-                        auto index_range = get_index_range(
-                            pos, local, sampler_t::int_width, sampler_t::width);
-                        get_weights<sampler_t>(Wval, index_range, pos);
-
-                        for (auto i = index_range.begin();
-                             i != index_range.end(); ++i)
-                        {
-                            double W = 1;
-                            for (uint d = 0; d < dim; ++d)
-                            {
-                                uint idx =
-                                    d * sampler_t::int_width + i.count(d);
-                                assert(idx >= 0 and idx < Wval.size());
-                                W *= Wval[idx];
-                            }
-
-                            *i += data_t(W, 0);
-                        }
-                    }
-                    return local;
-                },
-
-                /* reduction = */
-                [](data_vec_t a, const data_vec_t& b) {
-                    std::transform(a.begin(), a.end(), b.begin(), a.begin(),
-                                   std::plus<data_t>());
-                    return a;
-                }
-
-            );
-            std::copy(result.begin(), result.end(), _data.begin());
-
-#else
             std::array<double, sampler_t::int_width * dim> Wval;
             for (size_t p = 0; p < Position.size(); p += dim)
             {
@@ -396,7 +339,6 @@ namespace PM
                     *i += data_t(W, 0);
                 }
             }
-#endif
         }
 
         /*
@@ -406,7 +348,7 @@ namespace PM
         auto get_modes() const
         {
             std::cerr << "Counting modes ...\n";
-            
+
             const int k_max = size() / 2;
             std::vector<T> modes(k_max, 0);
             std::vector<int> count(k_max, 0);

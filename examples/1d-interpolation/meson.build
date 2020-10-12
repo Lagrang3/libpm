@@ -6,6 +6,3 @@ one_d_interpolation = executable('1d-interpolation',one_d_interpolation_files,
     dependencies: [fftw3],
     link_with: libpm)
 
-
-
-

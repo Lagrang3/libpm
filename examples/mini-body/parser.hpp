@@ -8,7 +8,6 @@
 #include <stdexcept>
 #include <string>
 
-
 class ParamfileParser
 {
    private:

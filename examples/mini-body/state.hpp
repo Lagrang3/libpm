@@ -36,9 +36,9 @@ class state
         header.redshift = 1.0 / a - 1;
         header.Omega0 = Omega0;
         header.OmegaLambda = OmegaLambda;
-        
-        header.HubbleParam = 0.6; // OJO
-        header.mass[1] = 1.0;  // OJO
+
+        header.HubbleParam = 0.6;  // OJO
+        header.mass[1] = 1.0;      // OJO
 
         snap.write_header();
 
