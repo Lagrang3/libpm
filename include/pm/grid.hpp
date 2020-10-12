@@ -15,7 +15,7 @@
 #    include <tbb/parallel_reduce.h>
 #endif
 
-#include "libpm_utilities.hpp"
+#include <pm/utilities.hpp>
 
 namespace PM
 {
@@ -465,5 +465,5 @@ namespace PM
     };
 }  // namespace PM
 
-#include "libpm_grid_iterator.hpp"
-#include "libpm_grid_range.hpp"
+#include <pm/grid_iterator.hpp>
+#include <pm/grid_range.hpp>

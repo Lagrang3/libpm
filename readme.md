@@ -22,7 +22,7 @@ Requirements
 
 - [`meson >= 0.54.2`](https://mesonbuild.com/)
 - [`FFTW3`](http://fftw.org/)
-- [`libgadget`](https://github.com/Lagrang3/libgadget)
+- [`Boost`](https://www.boost.org)
 
 Todo
 ----
