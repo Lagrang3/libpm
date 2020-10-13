@@ -24,31 +24,67 @@ void test(const int N_points, const double tolerance, callable F)
     BOOST_CHECK_SMALL(max_diff, tolerance);
 }
 
-template <class filter_t, class callable>
-void test_case(callable F)
-{
-    test<12, filter_t>(10'000, 0.1, F);
-    test<100, filter_t>(10'000, 0.01, F);
-    test<1000, filter_t>(10'000, 0.001, F);
-}
-
 struct triangle_test_suite : public ut::test_suite
 {
     triangle_test_suite() : ut::test_suite("Triangular shape")
     {
         auto F = [](double x) { return 3 * std::min(x, 1 - x); };
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<12, PM::NGP_filter, decltype(F)>, 10'000, 0.1, F),
+            "NGP 12modes"));
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<100, PM::NGP_filter, decltype(F)>, 10'000, 0.01, F),
+            "NGP 100modes"));
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<1000, PM::NGP_filter, decltype(F)>, 10'000, 0.001,
+                      F),
+            "NGP 1000modes"));
 
         add(BOOST_TEST_CASE_NAME(
-            std::bind(&test_case<PM::NGP_filter, decltype(F)>, F), "NGP"));
+            std::bind(&test<12, PM::CIC_filter, decltype(F)>, 10'000, 0.1, F),
+            "CIC 12modes"));
         add(BOOST_TEST_CASE_NAME(
-            std::bind(&test_case<PM::CIC_filter, decltype(F)>, F), "CIC"));
+            std::bind(&test<100, PM::CIC_filter, decltype(F)>, 10'000, 0.01, F),
+            "CIC 100modes"));
         add(BOOST_TEST_CASE_NAME(
-            std::bind(&test_case<PM::TSC_filter, decltype(F)>, F), "TSC"));
+            std::bind(&test<1000, PM::CIC_filter, decltype(F)>, 10'000, 0.001,
+                      F),
+            "CIC 1000modes"));
+
         add(BOOST_TEST_CASE_NAME(
-            std::bind(&test_case<PM::PCS_filter, decltype(F)>, F), "PCS"));
+            std::bind(&test<12, PM::TSC_filter, decltype(F)>, 10'000, 0.1, F),
+            "TSC 12modes"));
         add(BOOST_TEST_CASE_NAME(
-            std::bind(&test_case<PM::Gaussian_filter, decltype(F)>, F),
-            "Gaussian"));
+            std::bind(&test<100, PM::TSC_filter, decltype(F)>, 10'000, 0.01, F),
+            "TSC 100modes"));
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<1000, PM::TSC_filter, decltype(F)>, 10'000, 0.001,
+                      F),
+            "TSC 1000modes"));
+
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<12, PM::PCS_filter, decltype(F)>, 10'000, 0.1, F),
+            "PCS 12modes"));
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<100, PM::PCS_filter, decltype(F)>, 10'000, 0.01, F),
+            "PCS 100modes"));
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<1000, PM::PCS_filter, decltype(F)>, 10'000, 0.001,
+                      F),
+            "PCS 1000modes"));
+
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<12, PM::Gaussian_filter, decltype(F)>, 10'000, 0.15,
+                      F),
+            "Gaussian 12modes"));
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<100, PM::Gaussian_filter, decltype(F)>, 10'000,
+                      0.015, F),
+            "Gaussian 100modes"));
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<1000, PM::Gaussian_filter, decltype(F)>, 10'000,
+                      0.0015, F),
+            "Gaussian 1000modes"));
     }
 };
 struct sine_test_suite : public ut::test_suite
@@ -56,20 +92,48 @@ struct sine_test_suite : public ut::test_suite
     sine_test_suite() : ut::test_suite("Sine shape")
     {
         auto F = [](double x) {
-            return sin(x * 2 * pi * 6) + sin(x * 2 * pi * 5);
+            return sin(2 * pi * x * 6) + sin(2 * pi * x * 5);
         };
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<100, PM::NGP_filter, decltype(F)>, 10'000, 0.2, F),
+            "NGP 100modes"));
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<1000, PM::NGP_filter, decltype(F)>, 10'000, 0.02,
+                      F),
+            "NGP 1000modes"));
 
         add(BOOST_TEST_CASE_NAME(
-            std::bind(&test_case<PM::NGP_filter, decltype(F)>, F), "NGP"));
+            std::bind(&test<100, PM::CIC_filter, decltype(F)>, 10'000, 0.01, F),
+            "CIC 100modes"));
         add(BOOST_TEST_CASE_NAME(
-            std::bind(&test_case<PM::CIC_filter, decltype(F)>, F), "CIC"));
+            std::bind(&test<1000, PM::CIC_filter, decltype(F)>, 10'000, 0.001,
+                      F),
+            "CIC 1000modes"));
+
         add(BOOST_TEST_CASE_NAME(
-            std::bind(&test_case<PM::TSC_filter, decltype(F)>, F), "TSC"));
+            std::bind(&test<100, PM::TSC_filter, decltype(F)>, 10'000, 0.01, F),
+            "TSC 100modes"));
         add(BOOST_TEST_CASE_NAME(
-            std::bind(&test_case<PM::PCS_filter, decltype(F)>, F), "PCS"));
+            std::bind(&test<1000, PM::TSC_filter, decltype(F)>, 10'000, 0.001,
+                      F),
+            "TSC 1000modes"));
+
         add(BOOST_TEST_CASE_NAME(
-            std::bind(&test_case<PM::Gaussian_filter, decltype(F)>, F),
-            "Gaussian"));
+            std::bind(&test<100, PM::PCS_filter, decltype(F)>, 10'000, 0.01, F),
+            "PCS 100modes"));
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<1000, PM::PCS_filter, decltype(F)>, 10'000, 0.001,
+                      F),
+            "PCS 1000modes"));
+
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<100, PM::Gaussian_filter, decltype(F)>, 10'000,
+                      0.03, F),
+            "Gaussian 100modes"));
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<1000, PM::Gaussian_filter, decltype(F)>, 10'000,
+                      0.0015, F),
+            "Gaussian 1000modes"));
     }
 };
 

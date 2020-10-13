@@ -25,7 +25,11 @@ namespace PM
         constexpr static int int_width = 2;
         constexpr static double width = int_width * 0.5;
 
-        double operator()(double x) const { return std::abs(x) < 0.5 ? 1 : 0; }
+        double operator()(double x) const
+        {
+            auto s = std::abs(x);
+            return s < 0.5 ? 1 : (s > 0.5 ? 0 : 0.5);
+        }
     };
 
     class CIC_filter
