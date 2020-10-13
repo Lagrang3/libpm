@@ -15,7 +15,6 @@
 
 namespace PM
 {
-
     template <int dim /* dimension = 1,2,3 */,
               class T /* precision */,
               class sampler_t /* sampling filter  */,
@@ -68,6 +67,7 @@ namespace PM
         {
             std::cerr << "Compute potential ...\n";
             const int64_t k_max = k_nyquist(), N = size();
+            const double pi = acos(-1.0);
             auto index_to_k = [k_max, N](int64_t index) {
                 return (index <= k_max ? index : index - N);
             };

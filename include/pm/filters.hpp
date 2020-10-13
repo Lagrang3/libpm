@@ -85,7 +85,7 @@ namespace PM
             const double iN = 1.0 / N;
             double s = iN * x * pi;
 
-            if (std::fabs(s) < 1e-4)
+            if (std::fabs(s) < 1e-6)
                 return iN * (2 * k_max + 1);
 
             double num = sin(s * (2 * k_max + 1)), den = sin(s);
