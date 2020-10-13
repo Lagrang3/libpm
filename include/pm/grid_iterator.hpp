@@ -12,10 +12,10 @@ namespace PM
 
        protected:
         const const_range& parent_range;
-        const data_vec_t& _data;
+        const data_fixed_t& _data;
         std::array<int, dim> _state;
         int64_t _count;
-        size_t _size;
+        size_t _size, _data_size;
 
        public:
         const_iterator(const const_range& p,
@@ -25,7 +25,8 @@ namespace PM
               _data{p._data},
               _state{init},
               _count{c},
-              _size{p._size}
+              _size{p._size},
+              _data_size{p._data_size}
         {
         }
 
@@ -78,7 +79,7 @@ namespace PM
             {
                 index = index * N + modulo(_state[d], N);
             }
-            assert(index >= 0 and index < _data.size());
+            assert(index >= 0 and index < _data_size);
             return _data[index];
         }
         int count(uint d) const { return _state[d] - parent_range._init[d]; }
@@ -94,10 +95,10 @@ namespace PM
 
        protected:
         const range& parent_range;
-        data_vec_t& _data;
+        data_fixed_t& _data;
         std::array<int, dim> _state;
         int64_t _count;
-        size_t _size;
+        size_t _size, _data_size;
 
        public:
         iterator(const range& p, std::array<int, dim> init, int64_t c)
@@ -105,7 +106,8 @@ namespace PM
               _data{p._data},
               _state{init},
               _count{c},
-              _size{p._size}
+              _size{p._size},
+              _data_size{p._data_size}
         {
         }
 
@@ -152,7 +154,7 @@ namespace PM
             {
                 index = index * N + modulo(_state[d], N);
             }
-            assert(index >= 0 and index < _data.size());
+            assert(index >= 0 and index < _data_size);
             return _data[index];
         }
         int count(uint d) const { return _state[d] - parent_range._init[d]; }

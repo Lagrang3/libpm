@@ -13,13 +13,13 @@ namespace PM
         friend grid::const_iterator;
 
        protected:
-        const data_vec_t& _data;
+        const data_fixed_t& _data;
         std::array<int, dim> _init, _end;
         int64_t num_elements = 1;
-        size_t _size;
+        size_t _size, _data_size;
 
        public:
-        const_range(const data_vec_t& data,
+        const_range(const data_fixed_t& data,
                     std::array<int, dim> init,
                     std::array<int, dim> end,
                     size_t size)
@@ -69,13 +69,13 @@ namespace PM
         friend grid::const_range;
 
        protected:
-        data_vec_t& _data;
+        data_fixed_t& _data;
         std::array<int, dim> _init, _end;
         int64_t num_elements = 1;
-        size_t _size;
+        size_t _size, _data_size;
 
        public:
-        range(data_vec_t& data,
+        range(data_fixed_t& data,
               std::array<int, dim> init,
               std::array<int, dim> end,
               size_t size)

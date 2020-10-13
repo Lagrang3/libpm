@@ -6,6 +6,7 @@
 #include <cmath>
 #include <complex>
 #include <fftw3.h>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -14,16 +15,6 @@
 
 namespace PM
 {
-    /*
-    possible solution
-    template<class T>
-    class vector : public std::vector<T>
-    {
-        using std::vector<T>::vector;
-
-        vector& operator = (vector&& that) = delete;
-    };
-    */
 
     template <int dim /* dimension = 1,2,3 */,
               class T /* precision */,
@@ -33,6 +24,7 @@ namespace PM
     {
         using data_t = std::complex<double>;
         using data_vec_t = std::vector<data_t>;
+        using data_fixed_t = const std::unique_ptr<data_t[]>;
 
         class range;
         class iterator;
@@ -40,8 +32,8 @@ namespace PM
         class const_range;
         class const_iterator;
 
-        size_t _size, kN;
-        data_vec_t _data;
+        const size_t _size, kN, _data_size;
+        data_fixed_t _data;
 
         sampler_t W_in;
         interpolator_t W_out;
@@ -81,7 +73,7 @@ namespace PM
             };
 
             _data[0] = 0;  // const mode
-            for (size_t i = 1; i < _data.size(); ++i)
+            for (size_t i = 1; i < _data_size; ++i)
             {
                 int64_t k_squared = 0, tot = i;
                 for (uint d = 0; d < dim; ++d)
@@ -95,7 +87,7 @@ namespace PM
         }
 
         auto get_index_range(const std::array<T, dim>& pos,
-                             data_vec_t& data,
+                             data_fixed_t& data,
                              const int int_width = 0,
                              const double width = 0)
         {
@@ -113,7 +105,7 @@ namespace PM
             return range(data, lower_corner, upper_corner, size());
         }
         auto get_index_range(const std::array<T, dim>& pos,
-                             const data_vec_t& data,
+                             const data_fixed_t& data,
                              const int int_width = 0,
                              const double width = 0.) const
         {
@@ -179,7 +171,10 @@ namespace PM
 
         // constructor
         grid(size_t sz)
-            : _size{sz}, kN{(sz - 1) / 2}, _data(PM::power<dim>(_size))
+            : _size{sz},
+              kN{(sz - 1) / 2},
+              _data_size{PM::power<dim>(_size)},
+              _data{new data_t[_data_size]}
         {
             auto N = size();
 
