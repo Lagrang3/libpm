@@ -1,3 +1,23 @@
+/*
+    Unit Test:
+    ----------
+    
+    This test module checks the interpolation
+    routine of the serial grid.
+    
+    Should this test fail the possible causes are:
+    
+    1. the grid size N is too small for the interpolation
+    to reproduce the input function, for the given
+    tolerance. If the input function
+    has no moments higher than N/2 and the 
+    interpolating kernel is the Shannon-Whittaker,
+    here PM::Grid_filter, then interpolation should 
+    be exact.
+    
+    2. PM::Grid::interpolate is buggy.
+*/
+
 #include <boost/test/unit_test.hpp>
 #include <cmath>
 #include <pm.hpp>
@@ -178,16 +198,16 @@ struct sine_test_suite : public ut::test_suite
             "LowPass 6/1000modes"));
 
         add(BOOST_TEST_CASE_NAME(
-            std::bind(&test<13, PM::Grid_filter<13>, decltype(F)>, 10'000, 1e-8,
+            std::bind(&test<13, PM::Grid_filter<13>, decltype(F)>, 10'000, 1e-13,
                       F),
             "Sinc 6modes"));
         add(BOOST_TEST_CASE_NAME(
             std::bind(&test<100, PM::Grid_filter<100>, decltype(F)>, 10'000,
-                      1e-8, F),
+                      1e-13, F),
             "Sinc 100modes"));
         add(BOOST_TEST_CASE_NAME(
             std::bind(&test<1000, PM::Grid_filter<1000>, decltype(F)>, 10'000,
-                      1e-8, F),
+                      1e-13, F),
             "Sinc 1000modes"));
     }
 };
