@@ -1,20 +1,20 @@
 /*
     Unit Test:
     ----------
-    
+
     This test module checks the interpolation
     routine of the serial grid.
-    
+
     Should this test fail the possible causes are:
-    
+
     1. the grid size N is too small for the interpolation
     to reproduce the input function, for the given
     tolerance. If the input function
-    has no moments higher than N/2 and the 
+    has no moments higher than N/2 and the
     interpolating kernel is the Shannon-Whittaker,
-    here PM::Grid_filter, then interpolation should 
+    here PM::Grid_filter, then interpolation should
     be exact.
-    
+
     2. PM::Grid::interpolate is buggy.
 */
 
@@ -125,15 +125,15 @@ struct triangle_test_suite : public ut::test_suite
         add(BOOST_TEST_CASE_NAME(
             std::bind(&test<13, PM::Grid_filter<13>, decltype(F)>, 10'000, 0.1,
                       F),
-            "Sinc 6modes"));
+            "LowPass 6modes"));
         add(BOOST_TEST_CASE_NAME(
             std::bind(&test<100, PM::Grid_filter<100>, decltype(F)>, 10'000,
-                      0.01, F),
-            "Sinc 100modes"));
+                      0.025, F),
+            "LowPass 100modes"));
         add(BOOST_TEST_CASE_NAME(
             std::bind(&test<1000, PM::Grid_filter<1000>, decltype(F)>, 10'000,
-                      0.001, F),
-            "Sinc 1000modes"));
+                      0.0025, F),
+            "LowPass 1000modes"));
     }
 };
 struct sine_test_suite : public ut::test_suite
@@ -198,17 +198,71 @@ struct sine_test_suite : public ut::test_suite
             "LowPass 6/1000modes"));
 
         add(BOOST_TEST_CASE_NAME(
-            std::bind(&test<13, PM::Grid_filter<13>, decltype(F)>, 10'000, 1e-13,
-                      F),
-            "Sinc 6modes"));
+            std::bind(&test<13, PM::Grid_filter<13>, decltype(F)>, 10'000,
+                      1e-13, F),
+            "GridFilter 6 modes"));
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<101, PM::Grid_filter<101>, decltype(F)>, 10'000,
+                      1e-13, F),
+            "GridFilter 50 modes"));
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<1001, PM::Grid_filter<1001>, decltype(F)>, 10'000,
+                      1e-13, F),
+            "GridFilter 500 modes"));
+
+        // fails because mode 6 is present
+        // add(BOOST_TEST_CASE_NAME(
+        //    std::bind(&test<12, PM::Grid_filter<12>, decltype(F)>, 10'000,
+        //    1e-13,
+        //              F),
+        //    "LowPass 5.5 modes"));
+
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<14, PM::Grid_filter<14>, decltype(F)>, 10'000,
+                      1e-13, F),
+            "GridFilter 6.5 modes"));
+
         add(BOOST_TEST_CASE_NAME(
             std::bind(&test<100, PM::Grid_filter<100>, decltype(F)>, 10'000,
                       1e-13, F),
-            "Sinc 100modes"));
+            "GridFilter 49.5 modes"));
         add(BOOST_TEST_CASE_NAME(
             std::bind(&test<1000, PM::Grid_filter<1000>, decltype(F)>, 10'000,
                       1e-13, F),
-            "Sinc 1000modes"));
+            "GridFilter 499.5 modes"));
+
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<13, PM::Sinc_filter<13>, decltype(F)>, 10'000,
+                      1e-13, F),
+            "Sinc 6 modes"));
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<101, PM::Sinc_filter<101>, decltype(F)>, 10'000,
+                      1e-13, F),
+            "Sinc 50 modes"));
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<1001, PM::Sinc_filter<1001>, decltype(F)>, 10'000,
+                      1e-13, F),
+            "Sinc 500 modes"));
+
+        // The following cases fail when the tolerance is 1e-13
+        // because Sinc<N> for N even does not satisfy
+        //          F = Sinc<N> * F
+        // Sinc<N> could have non vanishing modes above kN, but the real problem
+        // is that in Fourier space Sinc<N> is not uniform. Check this!
+
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<14, PM::Sinc_filter<14>, decltype(F)>, 10'000, 0.5,
+                      F),
+            "Sinc 6.5 modes"));
+
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<100, PM::Sinc_filter<100>, decltype(F)>, 10'000,
+                      0.025, F),
+            "Sinc 49.5 modes"));
+        add(BOOST_TEST_CASE_NAME(
+            std::bind(&test<1000, PM::Sinc_filter<1000>, decltype(F)>, 10'000,
+                      0.002, F),
+            "Sinc 499.5 modes"));
     }
 };
 

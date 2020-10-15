@@ -85,7 +85,7 @@ namespace PM
             const double iN = 1.0 / N;
             double s = iN * x * pi;
 
-            if (std::fabs(s) < 1e-6)
+            if (std::fabs(s) < 1e-8)
                 return iN * (2 * k_max + 1);
 
             double num = sin(s * (2 * k_max + 1)), den = sin(s);
@@ -95,5 +95,30 @@ namespace PM
     };
 
     template <int N>
-    using Grid_filter = LowPass_filter<N / 2, N>;
+    class Sinc_filter
+    {
+       public:
+        constexpr static int int_width = N;
+        constexpr static double width = int_width * .5;
+
+        double operator()(double x) const
+        {
+            const double iN = 1.0 / N;
+            double s = iN * x * pi;
+
+            if (std::fabs(s) < 1e-8)
+                return 1.0;
+
+            double num = sin(s * N), den = sin(s);
+
+            return num / den * iN;
+        }
+    };
+
+    template <int N>
+    using Grid_filter = LowPass_filter<(N - 1) / 2, N>;
+
+    // template <int N>
+    // using Grid_filter = Sinc_filter< N>;
+
 };  // namespace PM

@@ -6,6 +6,7 @@
 #include <cmath>
 #include <complex>
 #include <fftw3.h>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string>
