@@ -1,7 +1,8 @@
 default : $(PLOTS)
 
-$(PLOTS) : plot.py
-	python3 plot.py
+$(PLOTS) : plot.py mode-plot.py
+	-python3 plot.py
+	-python3 mode-plot.py
     
 
 clean:

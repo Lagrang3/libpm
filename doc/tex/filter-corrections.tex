@@ -1,0 +1,84 @@
+\section{Filter corrections}
+    
+\noindent In Section \ref{sec:sampling} we have discussed the fact that the
+$\Wlow$ filter is exact for sampling, in the sense that preserves all Fourier
+modes up to $k_N$ and kills all other modes above, but it is computationally
+expensive to apply. Hence we use other filters with a compact support to reduce
+the computational complexity of a sample to ${\cal O}(1)$.
+Usually these alternative filters, let's call them $W$,
+are symmetric about $x=0$,
+and if we try to insert it into equation (\ref{eq:sample1}) 
+we must guarantee that $W$ have been defined in the domain $[-L,L]$.
+On the other hand, the Fourier
+expansion in equation (\ref{eq:sample2}) is only possible if
+$W$ is $L$-periodic. 
+Hence $W$ must satisfy:
+$$W(L-\epsilon)=W(-\epsilon) = W(\epsilon).$$
+That in fact is indeed true for $\Wlow$, but if we introduce
+it by hand if we use another filter
+otherwise we might get unexpected results.
+
+Since these filters $W$ have non uniform modes below $k_N$
+their convolution with $\rho_o$ does not preserve $\langle u_k, \rho_o
+\rangle$. But we could use (\ref{eq:sample2}) to recover 
+$\langle u_k, \rho_o \rangle$ from $\langle u_k, W * \rho_o \rangle$.
+However, recall that we do not compute $\langle u_k, \rho \rangle$
+directly but we use $\tilde \rho_k$ as proxy:
+\begin{equation}
+    \tilde \rho_k
+    = \sum_{z\in\Z} 
+        \langle u_{k + z\, N}, \rho \rangle
+    = \sum_{z\in\Z} 
+       L 
+       \langle u_{k + z\, N}, W \rangle 
+       \langle u_{k + z\, N}, \rho_o \rangle .
+\end{equation}
+If $\langle u_{k}, W \rangle $ is assumed to be leading
+in order with respect to all the rest of the aliases $k+z,N$,
+then we can approximate the previous equation and we obtain
+\begin{equation}
+    \langle u_{k}, \rho_o \rangle 
+    \approx  
+    \frac{  
+        \tilde \rho_k %
+    }{
+        L\, %
+       \tilde W_k
+    },
+    \label{eq:correction1}
+\end{equation}
+which should be a better estimator for 
+    $\langle u_{k}, \rho_o \rangle $ than $\tilde \rho_k$ alone.
+Equation (\ref{eq:correction1}) is what we call the \emph{sampling filter
+correction}.
+
+
+
+{\centering%
+\begin{table}
+    \begin{tabular}{cc}
+        \begin{subfigure}{.5\textwidth}
+            \centering\includegraphics[width=\columnwidth]{./plots/NGP-modes-20.pdf}
+        \end{subfigure} &
+        \begin{subfigure}{.5\textwidth}
+            \centering\includegraphics[width=\columnwidth]{./plots/CIC-modes-20.pdf}
+        \end{subfigure} \\
+        \begin{subfigure}{.5\textwidth}
+            \centering\includegraphics[width=\columnwidth]{./plots/PCS-modes-20.pdf}
+        \end{subfigure} &
+        \begin{subfigure}{.5\textwidth}
+            \centering\includegraphics[width=\columnwidth]{./plots/TSC-modes-20.pdf}
+        \end{subfigure} \\
+        \begin{subfigure}{.5\textwidth}
+            \centering\includegraphics[width=\columnwidth]{./plots/gaussian-modes-20.pdf}
+        \end{subfigure} &
+        \begin{subfigure}{.5\textwidth}
+            \centering\includegraphics[width=\columnwidth]{./plots/low_pass-modes-20.pdf}
+        \end{subfigure} \\
+    \end{tabular}
+    \caption{Different sampling kernels at $N=20$, with a boxsize $L=1$.
+    The Fourier modes are compared to the discrete Fourier transform modes.
+    }
+    \label{tab:wfilters}
+\end{table}
+}

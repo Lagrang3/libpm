@@ -1,4 +1,4 @@
-\section{Sampling filters}
+\section{Sampling filters}\label{sec:sampling}
 
 \noindent In general, the density field will not satisfy 
 the condition necessary for Theorem \ref{th:nyquist} to hold,
@@ -17,7 +17,9 @@ $\rho = \Wlow * \rho_o$ to $\rho_o$.
 With
 \begin{equation}
     \rho(x) = \int dx' \Wlow(x-x') \rho_o(x'),
+    \label{eq:sample1}
 \end{equation}
+
 
 The low-pass filter can actually be computed analytically
 and its convolution with Dirac deltas would be again itself.
@@ -27,11 +29,13 @@ Considering the Fourier series for $\Wlow$ we get
     \langle u_k, \rho\rangle
     &= \int dx' \sum_{k'} \langle u_{k'},\Wlow \rangle \delta_{kk'}   u_{k'}^{\dagger}(x') \rho_o(x') \\
     &= L \langle u_{k},\Wlow \rangle \langle u_{k}, \rho_o \rangle ,
+    \label{eq:sample2}
 \end{split}
 \end{align}
 therefore
 \begin{equation}
-\langle u_{k},\Wlow \rangle = \begin{cases}
+\langle u_{k},\Wlow \rangle = 
+    \begin{cases}
     0, & |k|>k_N\\
     1/L, & |k|\le k_N
     \end{cases}
@@ -39,10 +43,12 @@ therefore
 and $\Wlow$ can be reconstructed analytically from its Fourier expansion:
 \begin{equation}
  \Wlow(x)
- = \frac{1}{L}\sum_{k=-n_N}^{k_N} u_k(x)
+ = \frac{1}{L}\sum_{k=-k_N}^{k_N} u_k(x)
  = \frac{1}{L} \frac{  \sin(\frac{\pi}{L} x (2k_N +1))  }{\sin(\frac{\pi}{L}x)}
  \label{eq:wlow}
 \end{equation}
+
+
 From equation (\ref{eq:wlow}) we see that $\Wlow$ is a distribution
 which wiggles and decays slowly as we go further from the origin,
 see figure \ref{fig:wdelta}.
@@ -56,6 +62,8 @@ we would need to add the contribution
 of every particle at every grid point, leading to an 
 algorithmic complexity, for a 1-dimesional grid, of $\mathcal{O}(N_p \cdot N)$, which is not feasible
 since usually one chooses $N$ to be as big as the memory permits and that's roughly $N\approx N_p$.
+
+
 
 To lower the complexity to $\mathcal{O}(N_p)$ one needs to approximate 
 the density field produced by a point particle to a distribution with a compact support

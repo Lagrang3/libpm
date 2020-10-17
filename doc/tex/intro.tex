@@ -1,2 +1,24 @@
 \section{Introduction}
-
+    
+    \subsection{Why a library?}
+    \noindent Take for instance \texttt{sqrt}.
+    It is not a program, it is an abstract concept---not a function
+    because a function would be a specific implementation of the
+    root square---that you call from your program.
+    It is useful because it performs a common operation
+    (that makes everyone need it) and
+    it is non-trivial to implement.
+    You don't do cosmological simulations with \texttt{sqrt}
+    alone, but you definitely needed.
+    
+    A library---just like \texttt{sqrt}---does a well defined task,
+    leaving out space to fill by the users, in order
+    to increase its range of applications.
+    It is mantained by the authors.
+    And the users get improvements for free, ie. 
+    faster execution, higher precision, debugging,
+    and extended features. For instance \texttt{sqrt<complex>}.
+    Furthermore, a library can outlive the codes which use it.
+    \texttt{Gadget} some day will not be mantained anymore,
+    but the \texttt{sqrt} will still be used by the forthcoming
+    cosmological codes.

@@ -77,9 +77,91 @@ with other filters which have a compact support, like NGP, CIC, etc,
 but bear in mind that we commit to an error than can be traced
 back to the fact that $\phi \ne \phi * W$.
 
-is made explicit
-with the Whittaker-Shannon interpolation formula.
+\subsection{\bf $N$ odd vs even debate}
 
+\noindent Notice for $N$ odd we can choose $\Wlow$ with cut-off frequency that satisfies 
+$2 k_N + 1 = N$. Then $\Wlow$ takes a form that we call \emph{Sinc} filter
+because of its resemblance and similar role to the Sinc function:
+\begin{equation}
+    \Wsinc(x)
+     = \left.\Wlow\right|_{N\text{odd}}(x)
+  = \frac{1}{L} \frac{  \sin(\frac{\pi N}{L} x)  }{\sin(\frac{\pi}{L}x)}.
+  \label{eq:sinc}
+\end{equation}
+Interesting is the fact that $\Wsinc$ for any $N$ will satisfy equation
+(\ref{eq:whittaker}) for any $x = k L / N$, ie.
+\begin{equation}
+    \phi_k = 
+            \frac{L}{N} \sum_{n=0}^{N-1} \,
+                \phi_n\,
+                 \Wsinc\left(\frac{(k-n)}{N}L\right),
+    \label{eq:grid_pts_identity}
+\end{equation}
+simply because
+\begin{equation}
+    \Wsinc( k L/N)
+  = \frac{1}{L} \frac{  \sin(\pi k)  }{\sin(\pi k/N)}.
+  = \frac{1}{L} \times 
+    \begin{cases}
+    N, & \text{$N$ divides $k$ }\\
+    0, & \text{otherwise}
+    \end{cases}
+\end{equation}
+and that's independent of the values of $\phi(x)$ at the grid points.
+That tempt us to use $\Wsinc$ instead of $\Wlow$ as
+a reference \emph{exact} interpolator.
 
+Trouble comes when $N$ is even.
+In that case $k_N = ( N-2 )/ 2$ according to Theorem \ref{th:nyquist}.
+A signal with mode $k_N+1$ cannot be completly reconstructed from 
+the $N$ samples, hence $\Wlow$ is has a frequency cut-off at $k_N$,
+having $2 k_N+1$ modes, one mode short from $N$.
+That has consequences, the first is that the identity 
+(\ref{eq:grid_pts_identity}) is not satisfied by $\Wlow$
+unless $\phi = \Wlow * \phi$.
+On the other hand, $\Wsinc$ does satisfy (\ref{eq:grid_pts_identity})
+but it can be shown that it does not interpolate a function $\phi$
+with modes below $k_N$. The reason lies in the fact that
+the modes of $\Wsinc$ below $k_N$ are not uniform, see figure
+\ref{fig:sinc_power}.
 
-\noindent Ancora da vedere in \cite{hockney}.
+\begin{figure}
+   \begin{subfigure}[b]{0.5\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{plots/Sinc-modes-20.pdf}
+     \end{subfigure}
+   \begin{subfigure}[b]{0.5\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{plots/Sinc-modes-21.pdf}
+     \end{subfigure}
+        \caption{$\Wsinc$ power spectrum, discrete FT and true FT.
+        For $N$ odd, we see the same features of $\Wlow$ that makes
+        $\Wsinc$ an exact interpolator.
+        While for $N$ even, the modes below $k_N$ are not flat
+        and that makes $\Wsinc$ fail to be an exact interpolator.}
+        \label{fig:sinc_power}
+\end{figure}
+
+\begin{figure}
+   \begin{subfigure}[b]{0.5\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{plots/Sinc-interpolation-20.pdf}
+     \end{subfigure}
+   \begin{subfigure}[b]{0.5\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{plots/Sinc-interpolation-21.pdf}
+     \end{subfigure}
+        \label{fig:sinc_interpolation}
+\end{figure}
+
+\begin{figure}
+   \begin{subfigure}[b]{0.5\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{plots/low_pass-interpolation-20.pdf}
+     \end{subfigure}
+   \begin{subfigure}[b]{0.5\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{plots/low_pass-interpolation-21.pdf}
+     \end{subfigure}
+        \label{fig:sinc_interpolation}
+\end{figure}
