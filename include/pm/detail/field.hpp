@@ -27,7 +27,6 @@ namespace PM
 
         data.resize(N_loc[0] * N_loc[1] * N_loc[2]);
     }
-    // TODO
     template <class T>
     void Field<T>::fft(FFT_type type)
     {
