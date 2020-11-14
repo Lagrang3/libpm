@@ -8,17 +8,20 @@ endif
 
 cpp=meson.get_compiler('cpp')
 format = find_program('clang-format',required: false)
-fftw3 = dependency('fftw3')
-boost=dependency('boost',modules : ['mpi'])
+boost=dependency('boost')
+boost_mpi=dependency('boost',modules :['mpi','serialization'])
+boost_ut=dependency('boost',modules :['unit_test_framework'])
 mpi = dependency('mpi',language: 'cpp')
+
 pkg=import('pkgconfig')
+fftw3 = dependency('fftw3')
 
 libpm_headers = []
 subdir('include')
 
 libpm = library('libpm',libpm_headers,
     include_directories: libpm_include,
-    dependencies: [fftw3,mpi,boost])
+    dependencies: [fftw3,mpi,boost_mpi,boost])
     
 install_headers(libpm_headers)
 
@@ -26,7 +29,7 @@ pkg.generate(libpm,
     description: 'C++ library for Particle-Mesh cosmological codes')
 
 examples_files=[]
-subdir('examples')
+#subdir('examples')
 
 test_files=[]
 subdir('tests')
