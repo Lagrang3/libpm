@@ -1,8 +1,4 @@
-/*
-    Unit Test:
-    ----------
-
-*/
+#define BOOST_TEST_MODULE Filters
 #include <boost/test/unit_test.hpp>
 #include <cmath>
 #include <pm/filters.hpp>
@@ -11,31 +7,17 @@
 
 namespace ut = boost::unit_test;
 
-template <int N, class filter_t>
-void test_grid_pts(const std::vector<double>& V, const double tolerance)
-{
-    double max_diff = std::numeric_limits<double>::min();
+/* function with finite modes below-eq 5 */
+auto good_signal = [](double x) {
+    static const double pi = acos(-1.0);
+    const int mod1 = 2, mod2 = 5;
+    return sin(2 * pi * mod1 * x) + 2 * sin(2 * pi * mod2 * x);
+};
 
-    auto fun = [V](int i) {
-        filter_t W;
-        double r = 0;
-        for (int j = 0; j < N; ++j)
-            r += V[j] * W(i - j);
-        return r;
-    };
+/* function with infinte modes */
+auto bad_signal = [](double x) { return x; };
 
-    for (int i = 0; i < N; ++i)
-    {
-        max_diff = std::max(max_diff, std::abs(V[i] - fun(i)));
-    }
-    BOOST_CHECK_SMALL(max_diff, tolerance);
-}
-
-/*
-    Test the LowPass and Sinc filters
-*/
-
-auto random_vec(const int N)
+auto random_vec(int N)
 {
     std::vector<double> V(N);
     std::mt19937 rng(11);
@@ -45,70 +27,144 @@ auto random_vec(const int N)
     return V;
 }
 
-template <int N>
-auto sine_vec()
+template <class F>
+auto signal_vec(int N, F& fun)
 {
     std::vector<double> V(N);
-    const double pi = acos(-1.0);
-    constexpr int mod1 = 2, mod2 = 5;
-    constexpr int kN = (N - 1) / 2;
-
-    static_assert(mod1 <= kN);
-    static_assert(mod2 <= kN);
-
     for (int i = 0; i < N; ++i)
-        V[i] = sin(2 * pi * mod1) + 2 * sin(2 * pi * mod2);
+        V[i] = fun(double(i) / N);
     return V;
 }
 
-struct Shannon_test_suite : public ut::test_suite
+template <class filter_t>
+struct interpolator
 {
-    Shannon_test_suite() : ut::test_suite("Shannon Filters")
+    interpolator(const std::vector<double>& V) : V{V} {}
+
+    double operator()(double x) const
+    //  0 <= x < 1
     {
-        {
-            constexpr int N = 11;
-            const auto V{random_vec(N)};
-            add(BOOST_TEST_CASE_NAME(
-                std::bind(&test_grid_pts<N, PM::Sinc_filter<N>>, V, 1e-14),
-                "Sinc " + std::to_string(N)));
-
-            add(BOOST_TEST_CASE_NAME(
-                std::bind(&test_grid_pts<N, PM::LowPass_filter<(N - 1) / 2, N>>,
-                          V, 1e-14),
-                "LowPass " + std::to_string(N)));
-        }
-        {
-            constexpr int N = 12;
-            const auto V{random_vec(N)};
-            add(BOOST_TEST_CASE_NAME(
-                std::bind(&test_grid_pts<N, PM::Sinc_filter<N>>, V, 1e-14),
-                "Sinc " + std::to_string(N)));
-
-            // Fails because for N even LowPass is not a delta kronecker
-            // function and identiy only holds for specific functions F.
-            // add(BOOST_TEST_CASE_NAME(
-            //     std::bind(&test_grid_pts<N, PM::LowPass_filter<(N-1)/2,N> >,
-            //     V,1e-14), "LowPass "+std::to_string(N)));
-        }
-        {
-            constexpr int N = 12;
-            const auto V{sine_vec<N>()};
-            add(BOOST_TEST_CASE_NAME(
-                std::bind(&test_grid_pts<N, PM::Sinc_filter<N>>, V, 1e-14),
-                "Sinc (2) " + std::to_string(N)));
-
-            // this test doesn't fail because the input function satisfies
-            // F = F * W
-            add(BOOST_TEST_CASE_NAME(
-                std::bind(&test_grid_pts<N, PM::LowPass_filter<(N - 1) / 2, N>>,
-                          V, 1e-14),
-                "LowPass (2) " + std::to_string(N)));
-        }
+        const int N = V.size();
+        double r = 0;
+        for (int j = 0; j < N; ++j)
+            r += V[j] * W(x * N - j);
+        return r;
     }
+
+    filter_t W{};
+    std::vector<double> V;
 };
 
-ut::test_suite* init_unit_test_suite(int argc, char* argv[])
+template <class F>
+double difference_pts(const F& f, const std::vector<double>& V)
 {
-    ut::framework::master_test_suite().add(new Shannon_test_suite);
-    return 0;
+    double r = std::numeric_limits<double>::min();
+    const int N = V.size();
+    for (int i = 0; i < N; ++i)
+    {
+        r = std::max(r, std::abs(V[i] - f(double(i) / N)));
+    }
+    return r;
+}
+
+template <class F, class G>
+double difference_functions(int N, const F& f, const G& g)
+{
+    double r = std::numeric_limits<double>::min();
+    for (int i = 0; i < N; ++i)
+    {
+        r = std::max(r, std::abs(g(double(i) / N) - f(double(i) / N)));
+    }
+    return r;
+}
+
+BOOST_AUTO_TEST_CASE(Shannon_filters)
+{
+    double diff;
+    const double eps = 1e-13;
+    const double some = 0.01;
+    {
+        constexpr int N = 11;
+        BOOST_TEST_CHECKPOINT("gridsize N odd, Nyquist function");
+        const auto Vx = signal_vec(N, good_signal);
+        interpolator<PM::Sinc_filter<N>> sinc(Vx);
+        interpolator<PM::LowPass_filter<(N - 1) / 2, N>> low(Vx);
+
+        diff = difference_pts(sinc, Vx);
+        BOOST_CHECK_SMALL(diff, eps);
+
+        diff = difference_pts(low, Vx);
+        BOOST_CHECK_SMALL(diff, eps);
+
+        diff = difference_functions(100'000, sinc, good_signal);
+        BOOST_CHECK_SMALL(diff, eps);
+
+        diff = difference_functions(100'000, low, good_signal);
+        BOOST_CHECK_SMALL(diff, eps);
+    }
+    {
+        constexpr int N = 11;
+        BOOST_TEST_CHECKPOINT("gridsize N odd, non-Nyquist function");
+        const auto Vx = signal_vec(N, bad_signal);
+        interpolator<PM::Sinc_filter<N>> sinc(Vx);
+        interpolator<PM::LowPass_filter<(N - 1) / 2, N>> low(Vx);
+
+        diff = difference_pts(sinc, Vx);
+        BOOST_CHECK_SMALL(diff, eps);
+
+        diff = difference_pts(low, Vx);
+        BOOST_CHECK_SMALL(diff, eps);
+
+        diff = difference_functions(100'000, sinc, bad_signal);
+        BOOST_CHECK_GE(diff, some);  // failure! because the input signal does
+        // not satisfy Shannon-Nyquist theorem, it has infinite modes
+
+        diff = difference_functions(100'000, low, bad_signal);
+        BOOST_CHECK_GE(diff, some);  // failure! because the input signal does
+        // not satisfy Shannon-Nyquist theorem, it has infinite modes
+    }
+    {
+        constexpr int N = 12;
+        BOOST_TEST_CHECKPOINT("gridsize N even, Nyquist function");
+        const auto Vx = signal_vec(N, good_signal);
+        interpolator<PM::Sinc_filter<N>> sinc(Vx);
+        interpolator<PM::LowPass_filter<(N - 1) / 2, N>> low(Vx);
+
+        diff = difference_pts(sinc, Vx);
+        BOOST_CHECK_SMALL(diff, eps);
+
+        diff = difference_pts(low, Vx);
+        BOOST_CHECK_SMALL(diff, eps);
+
+        diff = difference_functions(100'000, sinc, good_signal);
+        BOOST_CHECK_GE(diff, some);  // failure! because Sinc is not an exact
+        // interpolator of functions for N even
+
+        diff = difference_functions(100'000, low, good_signal);
+        BOOST_CHECK_SMALL(diff, eps);
+    }
+    {
+        constexpr int N = 12;
+        BOOST_TEST_CHECKPOINT("gridsize N even, non-Nyquist function");
+        const auto Vx = signal_vec(N, bad_signal);
+        interpolator<PM::Sinc_filter<N>> sinc(Vx);
+        interpolator<PM::LowPass_filter<(N - 1) / 2, N>> low(Vx);
+
+        diff = difference_pts(sinc, Vx);
+        BOOST_CHECK_SMALL(diff, eps);
+
+        diff = difference_pts(low, Vx);
+        BOOST_CHECK_GE(diff,
+                       some);  // failure! because the signal does not come
+        // from a finite modes and LowPass does not interpolate exactly the grid
+        // points for N even
+
+        diff = difference_functions(100'000, sinc, bad_signal);
+        BOOST_CHECK_GE(diff, some);  // failure! because the input signal does
+        // not satisfy Shannon-Nyquist theorem, it has infinite modes
+
+        diff = difference_functions(100'000, low, bad_signal);
+        BOOST_CHECK_GE(diff, some);  // failure! because the input signal does
+        // not satisfy Shannon-Nyquist theorem, it has infinite modes
+    }
 }

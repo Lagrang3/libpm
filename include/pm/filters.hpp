@@ -1,17 +1,15 @@
 #pragma once
 #include <cmath>
+#include <pm/detail/utilities.hpp>
 
 namespace PM
 {
-    const double pi = acos(-1.0);
-
     class Gaussian_filter
     {
-        const double norm_factor = 1 / sqrt(2.0 * pi);
+        const double norm_factor = 1 / sqrt(2.0 * constants::pi);
 
        public:
-        constexpr static int int_width = 8;
-        constexpr static double width = int_width * 0.5;
+        constexpr static int width = 8;
 
         double operator()(double x) const
         {
@@ -22,8 +20,7 @@ namespace PM
     class NGP_filter
     {
        public:
-        constexpr static int int_width = 2;
-        constexpr static double width = int_width * 0.5;
+        constexpr static int width = 2;
 
         double operator()(double x) const
         {
@@ -35,8 +32,7 @@ namespace PM
     class CIC_filter
     {
        public:
-        constexpr static int int_width = 2;
-        constexpr static double width = int_width * 0.5;
+        constexpr static int width = 2;
 
         double operator()(double x) const
         {
@@ -47,8 +43,7 @@ namespace PM
     class TSC_filter
     {
        public:
-        constexpr static int int_width = 3;
-        constexpr static double width = int_width * 0.5;
+        constexpr static int width = 3;
 
         double operator()(double x) const
         {
@@ -62,8 +57,7 @@ namespace PM
         const double norm_factor = 1. / 6;
 
        public:
-        constexpr static int int_width = 4;
-        constexpr static double width = int_width * 0.5;
+        constexpr static int width = 4;
 
         double operator()(double x) const
         {
@@ -77,13 +71,12 @@ namespace PM
     class LowPass_filter
     {
        public:
-        constexpr static int int_width = N;
-        constexpr static double width = int_width * .5;
+        constexpr static int width = N;
 
         double operator()(double x) const
         {
             const double iN = 1.0 / N;
-            double s = iN * x * pi;
+            double s = iN * x * constants::pi;
 
             if (std::fabs(s) < 1e-8)
                 return iN * (2 * k_max + 1);
@@ -98,13 +91,12 @@ namespace PM
     class Sinc_filter
     {
        public:
-        constexpr static int int_width = N;
-        constexpr static double width = int_width * .5;
+        constexpr static int width = N;
 
         double operator()(double x) const
         {
             const double iN = 1.0 / N;
-            double s = iN * x * pi;
+            double s = iN * x * constants::pi;
 
             if (std::fabs(s) < 1e-8)
                 return 1.0;

@@ -1,9 +1,15 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
 
 namespace PM
 {
+    namespace constants
+    {
+        const double pi = acos(-1.0);
+    }
+
     namespace utilities
     {
         inline int decompose(const int Length, const int parts, const int rank)
