@@ -125,6 +125,17 @@ with modes below $k_N$. The reason lies in the fact that
 the modes of $\Wsinc$ below $k_N$ are not uniform, see figure
 \ref{fig:sinc_power}.
 
+In summary:
+\begin{itemize}
+    \item $\Wsinc$ is an exact interpolator of {\bf grid points} but not necessarily
+    so for functions with $k_N$ modes,
+    \item $\Wlow$ is an exact interpolator of {\bf functions with $k_N$ modes} but it
+    might fail to exactly interpolate the grid points unless they correspond to
+    values of function with $k_N$ modes,
+    \item when $N$ is odd, hardly the most common case because powers of 2
+    are ususally choosen, both functions $\Wsinc$ and $\Wlow$ are identical.
+\end{itemize}
+
 \begin{figure}
    \begin{subfigure}[b]{0.5\textwidth}
          \centering
