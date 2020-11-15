@@ -9,24 +9,47 @@
 namespace PM
 {
     template <class T>
-    Field<T>::Field(boost::mpi::cartesian_communicator com, size_t N)
-        : com{com}, N_glob{N}
+    void Field<T>::delegated_constructor()
     {
         const auto coord = com.coordinates(com.rank());
         const auto top = com.topology();
 
         for (int i = 0; i < 2; ++i)
         {
-            N_loc[i] = utilities::decompose(N, top[i].size, coord[i]);
-            start_pos[i] = utilities::sum_decompose(N, top[i].size, coord[i]);
+            N_loc[i] = utilities::decompose(N_glob, top[i].size, coord[i]);
+            start_pos[i] =
+                utilities::sum_decompose(N_glob, top[i].size, coord[i]);
         }
-        N_loc[2] = N;
+        N_loc[2] = N_glob;
         start_pos[2] = 0;
 
         strides = {N_loc[1] * N_loc[2], N_loc[2], 1};
 
         data.resize(N_loc[0] * N_loc[1] * N_loc[2]);
     }
+
+    template <class T>
+    Field<T>::Field(boost::mpi::communicator boost_com,
+                    size_t N,
+                    std::array<int, 2> proc)
+        : com(boost_com,
+              boost::mpi::cartesian_topology{{proc[0], true}, {proc[1], true}}),
+          N_glob{N}
+    {
+        delegated_constructor();
+    }
+
+    template <class T>
+    Field<T>::Field(MPI_Comm raw_com, size_t N, std::array<int, 2> proc)
+        : com(boost::mpi::communicator(
+                  raw_com,
+                  boost::mpi::comm_create_kind::comm_duplicate),
+              boost::mpi::cartesian_topology{{proc[0], true}, {proc[1], true}}),
+          N_glob{N}
+    {
+        delegated_constructor();
+    }
+
     template <class T>
     void Field<T>::fft(FFT_type type)
     {

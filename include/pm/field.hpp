@@ -2,6 +2,7 @@
 
 #include <array>
 #include <boost/mpi.hpp>
+#include <boost/mpi/cartesian_communicator.hpp>
 #include <valarray>
 
 #include <pm/detail/fft.hpp>
@@ -34,8 +35,13 @@ namespace PM
         auto split_data(direction_t dir) const;
         void local_fft(FFT_type);
 
+        void delegated_constructor();
+
        public:
-        Field(boost::mpi::cartesian_communicator com, size_t N);
+        Field(MPI_Comm raw_com, size_t N, std::array<int, 2> proc);
+        Field(boost::mpi::communicator boost_com,
+              size_t N,
+              std::array<int, 2> proc);
 
         size_t size() const { return data.size(); }
         const auto& extents() const { return N_loc; }
@@ -50,6 +56,8 @@ namespace PM
 
         void tranpose_yz();
         void tranpose_xz();
+
+        auto get_communicator() const { return com; }
 
         // TODO get cell ref
         // TODO serialize

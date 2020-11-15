@@ -1,6 +1,5 @@
 #define BOOST_TEST_MODULE Field
 #include <boost/mpi.hpp>
-#include <boost/mpi/cartesian_communicator.hpp>
 #include <boost/mpi/communicator.hpp>
 #include <boost/mpi/environment.hpp>
 #include <boost/test/data/monomorphic.hpp>
@@ -52,12 +51,7 @@ BOOST_TEST_GLOBAL_FIXTURE(fixture);
 
 BOOST_AUTO_TEST_CASE(Size)
 {
-    mpi::cartesian_dimension dims[] = {{3, true}, {2, true}};
-    BOOST_REQUIRE(fixture::world.size() == dims[0].size * dims[1].size);
-    mpi::cartesian_communicator cart(fixture::world,
-                                     mpi::cartesian_topology{dims});
-
-    PM::Field<int> F(cart, 5);
+    PM::Field<int> F(MPI_Comm(fixture::world), 5, {3, 2});
 
     //  0   1
     //  ***|** 0
@@ -67,6 +61,8 @@ BOOST_AUTO_TEST_CASE(Size)
     //  ***|**
     //  ---+--
     //  ***|** 2
+
+    auto cart = F.get_communicator();
 
     size_t size{};
     switch (cart.rank())
@@ -94,13 +90,8 @@ BOOST_AUTO_TEST_CASE(Size)
 }
 BOOST_AUTO_TEST_CASE(FFT)
 {
-    mpi::cartesian_dimension dims[] = {{3, true}, {2, true}};
-    BOOST_REQUIRE(fixture::world.size() == dims[0].size * dims[1].size);
-    mpi::cartesian_communicator cart(fixture::world,
-                                     mpi::cartesian_topology{dims});
-
     const int N = 5;
-    PM::Field<cd> F(cart, N);
+    PM::Field<cd> F(fixture::world, N, {3, 2});
     std::array<int64_t, 3> N_strides{N * N, N, 1};
 
     //  0   1
@@ -161,13 +152,8 @@ BOOST_AUTO_TEST_CASE(FFT)
 }
 BOOST_AUTO_TEST_CASE(transpose)
 {
-    mpi::cartesian_dimension dims[] = {{3, true}, {2, true}};
-    BOOST_REQUIRE(fixture::world.size() == dims[0].size * dims[1].size);
-    mpi::cartesian_communicator cart(fixture::world,
-                                     mpi::cartesian_topology{dims});
-
     const int N = 5;
-    PM::Field<std::array<int64_t, 3>> F(cart, N);
+    PM::Field<std::array<int64_t, 3>> F(fixture::world, N, {3, 2});
 
     //  0   1
     //  ***|** 0
