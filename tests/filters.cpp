@@ -87,8 +87,8 @@ BOOST_AUTO_TEST_CASE(Shannon_filters)
         constexpr int N = 11;
         BOOST_TEST_CHECKPOINT("gridsize N odd, Nyquist function");
         const auto Vx = signal_vec(N, good_signal);
-        interpolator<PM::Sinc_filter<N>> sinc(Vx);
-        interpolator<PM::LowPass_filter<(N - 1) / 2, N>> low(Vx);
+        interpolator<PM::filters::Sinc<N>> sinc(Vx);
+        interpolator<PM::filters::LowPass<(N - 1) / 2, N>> low(Vx);
 
         diff = difference_pts(sinc, Vx);
         BOOST_CHECK_SMALL(diff, eps);
@@ -106,8 +106,8 @@ BOOST_AUTO_TEST_CASE(Shannon_filters)
         constexpr int N = 11;
         BOOST_TEST_CHECKPOINT("gridsize N odd, non-Nyquist function");
         const auto Vx = signal_vec(N, bad_signal);
-        interpolator<PM::Sinc_filter<N>> sinc(Vx);
-        interpolator<PM::LowPass_filter<(N - 1) / 2, N>> low(Vx);
+        interpolator<PM::filters::Sinc<N>> sinc(Vx);
+        interpolator<PM::filters::LowPass<(N - 1) / 2, N>> low(Vx);
 
         diff = difference_pts(sinc, Vx);
         BOOST_CHECK_SMALL(diff, eps);
@@ -127,8 +127,8 @@ BOOST_AUTO_TEST_CASE(Shannon_filters)
         constexpr int N = 12;
         BOOST_TEST_CHECKPOINT("gridsize N even, Nyquist function");
         const auto Vx = signal_vec(N, good_signal);
-        interpolator<PM::Sinc_filter<N>> sinc(Vx);
-        interpolator<PM::LowPass_filter<(N - 1) / 2, N>> low(Vx);
+        interpolator<PM::filters::Sinc<N>> sinc(Vx);
+        interpolator<PM::filters::LowPass<(N - 1) / 2, N>> low(Vx);
 
         diff = difference_pts(sinc, Vx);
         BOOST_CHECK_SMALL(diff, eps);
@@ -147,8 +147,8 @@ BOOST_AUTO_TEST_CASE(Shannon_filters)
         constexpr int N = 12;
         BOOST_TEST_CHECKPOINT("gridsize N even, non-Nyquist function");
         const auto Vx = signal_vec(N, bad_signal);
-        interpolator<PM::Sinc_filter<N>> sinc(Vx);
-        interpolator<PM::LowPass_filter<(N - 1) / 2, N>> low(Vx);
+        interpolator<PM::filters::Sinc<N>> sinc(Vx);
+        interpolator<PM::filters::LowPass<(N - 1) / 2, N>> low(Vx);
 
         diff = difference_pts(sinc, Vx);
         BOOST_CHECK_SMALL(diff, eps);

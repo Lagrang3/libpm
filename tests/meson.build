@@ -30,12 +30,18 @@ filters_ut = executable('filters',
     link_with: [libpm])
 test('Filters',filters_ut)
 
+test_files += files('ghost.cpp')
+ghost_ut = executable('ghost',['ghost.cpp'],
+    include_directories: libpm_include,
+    dependencies: [boost,boost_ut,boost_mpi,mpi,fftw3])
+test('field ghost cells',mpirun,
+   args: ['-np','6',ghost_ut.full_path()],
+   is_parallel: false)
+
 # test_files += files('1d-interpolation.cpp')
 # oned_interpolation_ut = executable('1d-interpolation-ut',
 #     ['1d-interpolation.cpp'],
 #     include_directories: [libpm_include], 
-#     dependencies: [boost,fftw3,boost_ut],
+#     dependencies: [boost,boost_ut],
 #     link_with: [libpm])
 # test('1D Interpolation',oned_interpolation_ut)
-
-# 

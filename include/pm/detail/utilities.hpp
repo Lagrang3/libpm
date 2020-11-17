@@ -58,10 +58,30 @@ namespace PM
         inline size_t index(int x,
                             int y,
                             int z,
-                            const std::array<int64_t, 3>& strides) noexcept
+                            const std::array<int64_t, 3>& strides,
+                            const std::array<int64_t, 3>& start = {0, 0,
+                                                                   0}) noexcept
         {
-            return z * strides[2] + strides[1] * y + strides[0] * x;
+            return (z - start[2]) * strides[2] + strides[1] * (y - start[1]) +
+                   strides[0] * (x - start[0]);
         }
 
     }  // namespace utilities
+
+    namespace filters
+    {
+        template <class filter_t, class Iter>
+        void weights(const filter_t& W,
+                     double start,
+                     double pos,
+                     Iter begin,
+                     Iter end)
+        {
+            for (; begin != end; ++begin, ++start)
+            {
+                (*begin) = W(pos - start);
+            }
+        }
+    }  // namespace filters
+
 }  // namespace PM

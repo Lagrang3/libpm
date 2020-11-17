@@ -8,8 +8,8 @@
 
 namespace PM
 {
-    template <class T>
-    void Field<T>::delegated_constructor()
+    template <class T, int Nghost>
+    void Field<T, Nghost>::delegated_constructor()
     {
         const auto coord = com.coordinates(com.rank());
         const auto top = com.topology();
@@ -26,12 +26,31 @@ namespace PM
         strides = {N_loc[1] * N_loc[2], N_loc[2], 1};
 
         data.resize(N_loc[0] * N_loc[1] * N_loc[2]);
+
+        // ghost cells
+        gsizes_x = {Nghost, 2 * Nghost + N_loc[1], N_loc[2]};
+        gsizes_y = {N_loc[0], Nghost, N_loc[2]};
+
+        gstrides_x = {gsizes_x[1] * gsizes_x[2], gsizes_x[2], 1};
+        gstrides_y = {gsizes_y[1] * gsizes_y[2], gsizes_y[2], 1};
+
+        ghost_x_down.resize(gsizes_x[0] * gsizes_x[1] * gsizes_x[2]);
+        ghost_x_up.resize(ghost_x_down.size());
+
+        ghost_y_down.resize(gsizes_y[0] * gsizes_y[1] * gsizes_y[2]);
+        ghost_y_up.resize(ghost_y_down.size());
+
+        gstart_x_down = {0 - Nghost, 0 - Nghost, 0};
+        gstart_x_up = {N_loc[0], 0 - Nghost, 0};
+
+        gstart_y_down = {0, 0 - Nghost, 0};
+        gstart_y_up = {0, N_loc[1], 0};
     }
 
-    template <class T>
-    Field<T>::Field(boost::mpi::communicator boost_com,
-                    size_t N,
-                    std::array<int, 2> proc)
+    template <class T, int Nghost>
+    Field<T, Nghost>::Field(boost::mpi::communicator boost_com,
+                            size_t N,
+                            std::array<int, 2> proc)
         : com(boost_com,
               boost::mpi::cartesian_topology{{proc[0], true}, {proc[1], true}}),
           N_glob{N}
@@ -39,8 +58,8 @@ namespace PM
         delegated_constructor();
     }
 
-    template <class T>
-    Field<T>::Field(MPI_Comm raw_com, size_t N, std::array<int, 2> proc)
+    template <class T, int Nghost>
+    Field<T, Nghost>::Field(MPI_Comm raw_com, size_t N, std::array<int, 2> proc)
         : com(boost::mpi::communicator(
                   raw_com,
                   boost::mpi::comm_create_kind::comm_duplicate),
@@ -50,8 +69,8 @@ namespace PM
         delegated_constructor();
     }
 
-    template <class T>
-    void Field<T>::fft(FFT_type type)
+    template <class T, int Nghost>
+    void Field<T, Nghost>::fft(FFT_type type)
     {
         local_fft(type);
 
@@ -63,16 +82,16 @@ namespace PM
         local_fft(type);
         tranpose_xz();
     }
-    template <class T>
-    void Field<T>::local_fft(FFT_type type)
+    template <class T, int Nghost>
+    void Field<T, Nghost>::local_fft(FFT_type type)
     {
         for (int i = 0; i < N_loc[0]; ++i)
             for (int j = 0; j < N_loc[1]; ++j)
                 FFTW3(&data[index(i, j, 0)], &data[index(i, j + 1, 0)],
                       &data[index(i, j, 0)], type);
     }
-    template <class T>
-    auto Field<T>::split_data(direction_t dir) const
+    template <class T, int Nghost>
+    auto Field<T, Nghost>::split_data(direction_t dir) const
     {
         const auto top = com.topology();
         const auto coord = com.coordinates(com.rank());
@@ -111,8 +130,8 @@ namespace PM
         return buff;
     }
 
-    template <class T>
-    void Field<T>::tranpose_yz()
+    template <class T, int Nghost>
+    void Field<T, Nghost>::tranpose_yz()
     {
         const auto top = com.topology();
         const int com_size = top[1].size;
@@ -136,8 +155,8 @@ namespace PM
                             V[utilities::index(i, k, j, strd)];
                 }
     }
-    template <class T>
-    void Field<T>::tranpose_xz()
+    template <class T, int Nghost>
+    void Field<T, Nghost>::tranpose_xz()
     {
         const auto top = com.topology();
         const int com_size = top[0].size;
@@ -160,5 +179,124 @@ namespace PM
                         (*this)(i, j, k + start) =
                             V[utilities::index(k, j, i, strd)];
                 }
+    }
+
+    template <class T, int Nghost>
+    auto& Field<T, Nghost>::operator()(int x, int y, int z)
+    {
+        // x planes comes first, because they are wider
+        // +---------> y dir
+        // | xxxxxx
+        // | y    y
+        // | y    y
+        // | y    y
+        // | xxxxxx
+        // |
+        // \/
+        // x dir
+        using utilities::index;
+        z = utilities::modulo(z, N_glob);
+        if (x < 0)
+            return ghost_x_down[index(x, y, z, gstrides_x, gstart_x_down)];
+        if (x >= N_loc[0])
+            return ghost_x_up[index(x, y, z, gstrides_x, gstart_x_up)];
+        if (y < 0)
+            return ghost_y_down[index(x, y, z, gstrides_y, gstart_y_down)];
+        if (y >= N_loc[1])
+            return ghost_y_up[index(x, y, z, gstrides_y, gstart_y_up)];
+        return data[index(x, y, z, strides)];
+    }
+
+    template <class T, int Nghost>
+    const auto& Field<T, Nghost>::operator()(int x, int y, int z) const
+    {
+        using utilities::index;
+        z = utilities::modulo(z, N_glob);
+        if (x < 0)
+            return ghost_x_down[index(x, y, z, gstrides_x, gstart_x_down)];
+        if (x >= N_loc[0])
+            return ghost_x_up[index(x, y, z, gstrides_x, gstart_x_up)];
+        if (y < 0)
+            return ghost_y_down[index(x, y, z, gstrides_y, gstart_y_down)];
+        if (y >= N_loc[1])
+            return ghost_y_up[index(x, y, z, gstrides_y, gstart_y_up)];
+        return data[index(x, y, z, strides)];
+    }
+    template <class T, int Nghost>
+    auto& Field<T, Nghost>::at(int x, int y, int z)
+    {
+        using utilities::index;
+        z = utilities::modulo(z, N_glob);
+        if (x < 0)
+            return ghost_x_down.at(index(x, y, z, gstrides_x, gstart_x_down));
+        if (x >= N_loc[0])
+            return ghost_x_up.at(index(x, y, z, gstrides_x, gstart_x_up));
+        if (y < 0)
+            return ghost_y_down.at(index(x, y, z, gstrides_y, gstart_y_down));
+        if (y >= N_loc[1])
+            return ghost_y_up.at(index(x, y, z, gstrides_y, gstart_y_up));
+        return data.at(index(x, y, z, strides));
+    }
+    template <class T, int Nghost>
+    const auto& Field<T, Nghost>::at(int x, int y, int z) const
+    {
+        using utilities::index;
+        z = utilities::modulo(z, N_glob);
+        if (x < 0)
+            return ghost_x_down.at(index(x, y, z, gstrides_x, gstart_x_down));
+        if (x >= N_loc[0])
+            return ghost_x_up.at(index(x, y, z, gstrides_x, gstart_x_up));
+        if (y < 0)
+            return ghost_y_down.at(index(x, y, z, gstrides_y, gstart_y_down));
+        if (y >= N_loc[1])
+            return ghost_y_up.at(index(x, y, z, gstrides_y, gstart_y_up));
+        return data.at(index(x, y, z, strides));
+    }
+
+    template <class T, int Nghost>
+    void Field<T, Nghost>::update_ghosts()
+    {
+        std::vector<T> buff;
+        // exchange along Y, the X is wider
+        auto next = com.shifted_ranks(1, 1);
+
+        // high to low
+        buff.resize(ghost_y_up.size());
+        for (int i = 0, pos = 0; i < N_loc[0]; ++i)
+            for (int j = 0; j < Nghost; ++j)
+                for (int k = 0; k < N_loc[2]; ++k, ++pos)
+                    buff[pos] = (*this)(i, j, k);
+
+        com.sendrecv(next.first, 0x01, buff, next.second, 0x01, ghost_y_up);
+
+        // low to high
+        buff.resize(ghost_y_down.size());
+        for (int i = 0, pos = 0; i < N_loc[0]; ++i)
+            for (int j = N_loc[1] - Nghost; j < N_loc[1]; ++j)
+                for (int k = 0; k < N_loc[2]; ++k, ++pos)
+                    buff[pos] = (*this)(i, j, k);
+
+        com.sendrecv(next.second, 0x00, buff, next.first, 0x00, ghost_y_down);
+
+        // exchange along X
+        next = com.shifted_ranks(0, 1);
+
+        // high to low
+        buff.resize(ghost_x_up.size());
+        for (int i = 0, pos = 0; i < Nghost; ++i)
+            for (int j = 0 - Nghost; j < N_loc[1] + Nghost; ++j)
+                for (int k = 0; k < N_loc[2]; ++k, ++pos)
+                    buff[pos] = (*this)(i, j, k);
+
+        com.sendrecv(next.first, 0x11, buff, next.second, 0x11, ghost_x_up);
+
+        // low to high
+        buff.resize(ghost_x_down.size());
+        for (int i = N_loc[0] - Nghost, pos = 0; i < N_loc[0]; ++i)
+            for (int j = 0 - Nghost; j < N_loc[1] + Nghost; ++j)
+                for (int k = 0; k < N_loc[2]; ++k, ++pos)
+                    buff[pos] = (*this)(i, j, k);
+
+        com.sendrecv(next.second, 0x10, buff, next.first, 0x10, ghost_x_down);
     }
 }  // namespace PM
