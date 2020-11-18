@@ -12,6 +12,7 @@ boost=dependency('boost')
 boost_mpi=dependency('boost',modules :['mpi','serialization'])
 boost_ut=dependency('boost',modules :['unit_test_framework'])
 mpi = dependency('mpi',language: 'cpp')
+mpirun = find_program('mpirun')
 
 pkg=import('pkgconfig')
 fftw3 = dependency('fftw3')
@@ -29,7 +30,7 @@ pkg.generate(libpm,
     description: 'C++ library for Particle-Mesh cosmological codes')
 
 examples_files=[]
-#subdir('examples')
+subdir('examples')
 
 test_files=[]
 subdir('tests')

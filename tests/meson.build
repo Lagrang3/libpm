@@ -1,4 +1,3 @@
-mpirun = find_program('mpirun')
 
 test_files += files('utils.cpp')
 utils = executable('utils','utils.cpp',
@@ -19,7 +18,7 @@ field = executable('field',['field.cpp'],
     include_directories: libpm_include,
     dependencies: [boost,boost_ut,boost_mpi,mpi,fftw3])
 test('field API',mpirun,
-   args: ['-np','6',field.full_path()],
+   args: ['-np','6',field],
    is_parallel: false)
 
 test_files += files('filters.cpp')
@@ -35,13 +34,15 @@ ghost_ut = executable('ghost',['ghost.cpp'],
     include_directories: libpm_include,
     dependencies: [boost,boost_ut,boost_mpi,mpi,fftw3])
 test('field ghost cells',mpirun,
-   args: ['-np','6',ghost_ut.full_path()],
+   args: ['-np','6',ghost_ut],
    is_parallel: false)
 
-# test_files += files('1d-interpolation.cpp')
-# oned_interpolation_ut = executable('1d-interpolation-ut',
-#     ['1d-interpolation.cpp'],
-#     include_directories: [libpm_include], 
-#     dependencies: [boost,boost_ut],
-#     link_with: [libpm])
-# test('1D Interpolation',oned_interpolation_ut)
+test_files += files('interpolation.cpp')
+interpolation_ut = executable('interpolation-ut',
+    ['interpolation.cpp'],
+    include_directories: [libpm_include], 
+    dependencies: [boost,boost_ut,mpi,boost_mpi],
+    link_with: [libpm])
+test('Interpolation',mpirun,
+   args: ['-np','2',interpolation_ut],
+   is_parallel: false)

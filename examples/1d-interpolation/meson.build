@@ -1,8 +1,7 @@
-one_d_interpolation_files= files(['main.cpp'])  
-examples_files += one_d_interpolation_files
+examples_files += files('main.cpp')
 
-one_d_interpolation = executable('1d-interpolation',one_d_interpolation_files,
+exe = executable('1d-interpolation','main.cpp',
     include_directories: [libpm_include], 
-    dependencies: [fftw3],
+    dependencies: [boost,mpi,boost_mpi],
     link_with: libpm)
 

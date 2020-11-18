@@ -72,14 +72,15 @@ namespace PM
     {
         template <class filter_t, class Iter>
         void weights(const filter_t& W,
-                     double start,
-                     double pos,
+                     double x_start,
+                     double x_ref,
                      Iter begin,
                      Iter end)
+        // x_start, x_ref from 0 to N
         {
-            for (; begin != end; ++begin, ++start)
+            for (; begin != end; ++begin, ++x_start)
             {
-                (*begin) = W(pos - start);
+                (*begin) = W(x_ref - x_start);
             }
         }
     }  // namespace filters

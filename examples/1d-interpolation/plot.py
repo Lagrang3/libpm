@@ -2,51 +2,48 @@
 
 import matplotlib.pyplot as plt
 
-def plot(ax,iname,fname):
+def plot(ax,shape,fname):
     ax.set_title(fname)
     x=[]
     y=[]
-    with open(iname+'_'+fname+'.dat','r') as fd:
+    with open(shape+'_'+fname+'.dat','r') as fd:
         for l in fd:
             a,b = map(lambda x: float(x),l.split())
             #print(a,b)
             x.append(a)
             y.append(b)
-    ax.plot(x,y,label=iname)
+    ax.plot(x,y,label=fname)
     
-def plot_pt(ax,iname,fname):
-    ax.set_title(fname)
+def plot_pt(ax,shape,fname):
     x=[]
     y=[]
-    with open(iname+'_'+fname+'.dat','r') as fd:
+    with open(shape+'_'+fname+'.dat','r') as fd:
         for l in fd:
             a,b = map(lambda x: float(x),l.split())
             #print(a,b)
             x.append(a)
             y.append(b)
-    ax.plot(x,y,'o',label=iname)
+    ax.plot(x,y,'o',label=fname)
     
 
-def plot_interpolation(name,funlist,subname):
+def plot_interpolation(shape,funlist,subname):
     fig=plt.figure()
     ax=fig.add_subplot()
-    plot_pt(ax,'pts',name)
-    for f in funlist:
-        plot(ax,f,name)
+    plot_pt(ax,shape,'points')
+    for fun in funlist:
+        plot(ax,shape,fun)
     ax.legend()
-    plt.savefig(name+'_'+subname+'.png')
+    #plt.show()
+    plt.savefig(shape+'_'+subname+'.png')
 
 if __name__=="__main__":
-    plot_interpolation('triangle',['exact','ngp','cic','tsc','pcs','gauss','low_pass'],'all')
-    plot_interpolation('triangle',['exact','ngp'],'ngp')
-    plot_interpolation('triangle',['exact','cic'],'cic')
-    plot_interpolation('triangle',['exact','tsc'],'tsc')
-    plot_interpolation('triangle',['exact','pcs',],'pcs')
-    plot_interpolation('triangle',['exact','gauss'],'gauss')
-    plot_interpolation('triangle',['exact','low_pass'],'low_pass')
-    plot_interpolation('sine_5_6',['exact','ngp'],'ngp')
-    plot_interpolation('sine_5_6',['exact','cic'],'cic')
-    plot_interpolation('sine_5_6',['exact','tsc'],'tsc')
-    plot_interpolation('sine_5_6',['exact','pcs',],'pcs')
-    plot_interpolation('sine_5_6',['exact','gauss'],'gauss')
-    plot_interpolation('sine_5_6',['exact','low_pass'],'low_pass')
+    plot_interpolation('triangle',['exact','NGP'],'ngp')
+    plot_interpolation('triangle',['exact','CIC'],'cic')
+    plot_interpolation('triangle',['exact','TSC'],'tsc')
+    plot_interpolation('triangle',['exact','PCS',],'pcs')
+    plot_interpolation('triangle',['exact','Gaussian'],'gaussian')
+    plot_interpolation('sine',['exact','NGP'],'ngp')
+    plot_interpolation('sine',['exact','CIC'],'cic')
+    plot_interpolation('sine',['exact','TSC'],'tsc')
+    plot_interpolation('sine',['exact','PCS',],'pcs')
+    plot_interpolation('sine',['exact','Gaussian'],'gaussian')

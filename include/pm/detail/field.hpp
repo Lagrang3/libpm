@@ -8,8 +8,8 @@
 
 namespace PM
 {
-    template <class T, int Nghost>
-    void Field<T, Nghost>::delegated_constructor()
+    template <class T, class interpolator_t>
+    void Field<T, interpolator_t>::delegated_constructor()
     {
         const auto coord = com.coordinates(com.rank());
         const auto top = com.topology();
@@ -28,6 +28,7 @@ namespace PM
         data.resize(N_loc[0] * N_loc[1] * N_loc[2]);
 
         // ghost cells
+        const int Nghost = ghost_thick();
         gsizes_x = {Nghost, 2 * Nghost + N_loc[1], N_loc[2]};
         gsizes_y = {N_loc[0], Nghost, N_loc[2]};
 
@@ -47,10 +48,10 @@ namespace PM
         gstart_y_up = {0, N_loc[1], 0};
     }
 
-    template <class T, int Nghost>
-    Field<T, Nghost>::Field(boost::mpi::communicator boost_com,
-                            size_t N,
-                            std::array<int, 2> proc)
+    template <class T, class interpolator_t>
+    Field<T, interpolator_t>::Field(boost::mpi::communicator boost_com,
+                                    size_t N,
+                                    std::array<int, 2> proc)
         : com(boost_com,
               boost::mpi::cartesian_topology{{proc[0], true}, {proc[1], true}}),
           N_glob{N}
@@ -58,8 +59,10 @@ namespace PM
         delegated_constructor();
     }
 
-    template <class T, int Nghost>
-    Field<T, Nghost>::Field(MPI_Comm raw_com, size_t N, std::array<int, 2> proc)
+    template <class T, class interpolator_t>
+    Field<T, interpolator_t>::Field(MPI_Comm raw_com,
+                                    size_t N,
+                                    std::array<int, 2> proc)
         : com(boost::mpi::communicator(
                   raw_com,
                   boost::mpi::comm_create_kind::comm_duplicate),
@@ -69,8 +72,8 @@ namespace PM
         delegated_constructor();
     }
 
-    template <class T, int Nghost>
-    void Field<T, Nghost>::fft(FFT_type type)
+    template <class T, class interpolator_t>
+    void Field<T, interpolator_t>::fft(FFT_type type)
     {
         local_fft(type);
 
@@ -82,16 +85,16 @@ namespace PM
         local_fft(type);
         tranpose_xz();
     }
-    template <class T, int Nghost>
-    void Field<T, Nghost>::local_fft(FFT_type type)
+    template <class T, class interpolator_t>
+    void Field<T, interpolator_t>::local_fft(FFT_type type)
     {
         for (int i = 0; i < N_loc[0]; ++i)
             for (int j = 0; j < N_loc[1]; ++j)
                 FFTW3(&data[index(i, j, 0)], &data[index(i, j + 1, 0)],
                       &data[index(i, j, 0)], type);
     }
-    template <class T, int Nghost>
-    auto Field<T, Nghost>::split_data(direction_t dir) const
+    template <class T, class interpolator_t>
+    auto Field<T, interpolator_t>::split_data(direction_t dir) const
     {
         const auto top = com.topology();
         const auto coord = com.coordinates(com.rank());
@@ -130,8 +133,8 @@ namespace PM
         return buff;
     }
 
-    template <class T, int Nghost>
-    void Field<T, Nghost>::tranpose_yz()
+    template <class T, class interpolator_t>
+    void Field<T, interpolator_t>::tranpose_yz()
     {
         const auto top = com.topology();
         const int com_size = top[1].size;
@@ -155,8 +158,8 @@ namespace PM
                             V[utilities::index(i, k, j, strd)];
                 }
     }
-    template <class T, int Nghost>
-    void Field<T, Nghost>::tranpose_xz()
+    template <class T, class interpolator_t>
+    void Field<T, interpolator_t>::tranpose_xz()
     {
         const auto top = com.topology();
         const int com_size = top[0].size;
@@ -181,8 +184,8 @@ namespace PM
                 }
     }
 
-    template <class T, int Nghost>
-    auto& Field<T, Nghost>::operator()(int x, int y, int z)
+    template <class T, class interpolator_t>
+    auto& Field<T, interpolator_t>::operator()(int x, int y, int z)
     {
         // x planes comes first, because they are wider
         // +---------> y dir
@@ -207,8 +210,8 @@ namespace PM
         return data[index(x, y, z, strides)];
     }
 
-    template <class T, int Nghost>
-    const auto& Field<T, Nghost>::operator()(int x, int y, int z) const
+    template <class T, class interpolator_t>
+    const auto& Field<T, interpolator_t>::operator()(int x, int y, int z) const
     {
         using utilities::index;
         z = utilities::modulo(z, N_glob);
@@ -222,8 +225,8 @@ namespace PM
             return ghost_y_up[index(x, y, z, gstrides_y, gstart_y_up)];
         return data[index(x, y, z, strides)];
     }
-    template <class T, int Nghost>
-    auto& Field<T, Nghost>::at(int x, int y, int z)
+    template <class T, class interpolator_t>
+    auto& Field<T, interpolator_t>::at(int x, int y, int z)
     {
         using utilities::index;
         z = utilities::modulo(z, N_glob);
@@ -237,8 +240,8 @@ namespace PM
             return ghost_y_up.at(index(x, y, z, gstrides_y, gstart_y_up));
         return data.at(index(x, y, z, strides));
     }
-    template <class T, int Nghost>
-    const auto& Field<T, Nghost>::at(int x, int y, int z) const
+    template <class T, class interpolator_t>
+    const auto& Field<T, interpolator_t>::at(int x, int y, int z) const
     {
         using utilities::index;
         z = utilities::modulo(z, N_glob);
@@ -253,9 +256,10 @@ namespace PM
         return data.at(index(x, y, z, strides));
     }
 
-    template <class T, int Nghost>
-    void Field<T, Nghost>::update_ghosts()
+    template <class T, class interpolator_t>
+    void Field<T, interpolator_t>::update_ghosts()
     {
+        const int Nghost = ghost_thick();
         std::vector<T> buff;
         // exchange along Y, the X is wider
         auto next = com.shifted_ranks(1, 1);
@@ -298,5 +302,38 @@ namespace PM
                     buff[pos] = (*this)(i, j, k);
 
         com.sendrecv(next.second, 0x10, buff, next.first, 0x10, ghost_x_down);
+    }
+
+    template <class T, class interpolator_t>
+    T Field<T, interpolator_t>::interpolate(double x, double y, double z) const
+    // x,y,z from 0 to N_glob
+    {
+        constexpr int width = interpolator_t::width;
+        const double dx = 0.5 * width;
+        std::array<double, 3 * width> Wval;
+        const std::array<double, 3> coord{x, y, z};
+        std::array<int, 3> low_coord;
+
+        for (int d = 0; d < 3; ++d)
+        {
+            auto beg = Wval.begin() + width * d;
+            low_coord[d] = std::ceil(coord[d] - dx);
+            filters::weights(W_inter, low_coord[d], coord[d], beg, beg + width);
+        }
+        double ret = 0;
+
+        for (int i = 0; i < width; ++i)
+            for (int j = 0; j < width; ++j)
+                for (int k = 0; k < width; ++k)
+                {
+                    double w = (*this)(i + low_coord[0], j + low_coord[1],
+                                       k + low_coord[2]);
+                    w *= Wval[i];
+                    w *= Wval[j + width];
+                    w *= Wval[k + 2 * width];
+                    ret += w;
+                }
+
+        return ret;
     }
 }  // namespace PM

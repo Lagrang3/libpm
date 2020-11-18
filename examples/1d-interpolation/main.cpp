@@ -1,84 +1,96 @@
-#include <algorithm>
-#include <fstream>
-#include <iostream>
+#include <boost/mpi.hpp>
+#include <boost/mpi/communicator.hpp>
+#include <boost/mpi/environment.hpp>
 #include <pm.hpp>
+#include <pm/field.hpp>
+#include <pm/filters.hpp>
+
+#include <cmath>
+#include <fstream>
 #include <string>
 
-template <class callable>
-void write(std::string fname, callable& F, int N_points)
+namespace mpi = boost::mpi;
+
+auto Triangle_shape = [](double z) { return 3 * std::min(z, 1 - z); };
+auto Sine_shape = [](double z) {
+    static const double pi = acos(-1.0);
+    return sin(2 * pi * z) + 3 * sin(2 * pi * z * 2);
+};
+
+template <class filter_t, class callable>
+void write_pts(mpi::communicator com,
+               int N_grid,
+               int N_eval,
+               callable F,
+               std::string fname,
+               std::string shape)
 {
-    std::ofstream fd(fname + ".dat");
-    for (int i = 0; i < N_points; ++i)
+    if (com.rank() == 0)
     {
-        double x = double(i) / N_points;
-        fd << x << " " << F.interpolate({x}) << '\n';
+        std::ofstream fd(shape + "_exact.dat");
+        for (int i = 0; i < N_eval; ++i)
+        {
+            double x = i * 1.0 / N_eval;
+            fd << x << " " << F(x) << '\n';
+        }
     }
-}
-
-template <class callable>
-void write_pts(std::string fname, callable& F)
-{
-    const int N_points = F.size();
-    std::ofstream fd(fname + ".dat");
-    for (int i = 0; i < N_points; ++i)
+    if (com.rank() == 0)
     {
-        double x = double(i) / N_points;
-        fd << x << " " << F.interpolate({x}) << '\n';
-    }
-}
-
-template <int k_max, class callable>
-void test(int N_points, std::string name, callable F)
-{
-    constexpr int N = k_max * 2 + 1;
-    PM::grid<1, double, PM::Gaussian_filter, PM::Grid_filter<N>> exact(N);
-    PM::grid<1, double, PM::Gaussian_filter, PM::NGP_filter> ngp(N);
-    PM::grid<1, double, PM::Gaussian_filter, PM::CIC_filter> cic(N);
-    PM::grid<1, double, PM::Gaussian_filter, PM::TSC_filter> tsc(N);
-    PM::grid<1, double, PM::Gaussian_filter, PM::PCS_filter> pcs(N);
-    PM::grid<1, double, PM::Gaussian_filter, PM::Gaussian_filter> gauss(N);
-    PM::grid<1, double, PM::Gaussian_filter, PM::LowPass_filter<5, N>> low_pass(
-        N);
-
-    for (int i = 0; i < N; ++i)
-    {
-        exact.at({i}) = ngp.at({i}) = cic.at({i}) = tsc.at({i}) = pcs.at({i}) =
-            gauss.at({i}) = low_pass.at({i}) = F(double(i) / N);
+        std::ofstream fd(shape + "_points.dat");
+        for (int i = 0; i < N_grid; ++i)
+        {
+            double x = i * 1.0 / N_grid;
+            fd << x << " " << F(x) << '\n';
+        }
     }
 
-    write_pts("pts_" + name, exact);
-    write("exact_" + name, exact, N_points);
-    write("ngp_" + name, ngp, N_points);
-    write("cic_" + name, cic, N_points);
-    write("tsc_" + name, tsc, N_points);
-    write("pcs_" + name, pcs, N_points);
-    write("gauss_" + name, gauss, N_points);
-    write("low_pass_" + name, low_pass, N_points);
-}
+    PM::Field<double, filter_t> phi(com, N_grid, {1, 1});
 
-template <int k_max, class callable>
-void simple_test(int N_points, std::string name, callable F)
-{
-    constexpr int N = k_max * 2 + 1;
-    PM::grid<1, double, PM::Gaussian_filter, PM::LowPass_filter<k_max, N>>
-        exact(N);
-    for (int i = 0; i < N; ++i)
+    for (int i = 0; i < phi.extents()[0]; ++i)
+        for (int j = 0; j < phi.extents()[1]; ++j)
+            for (int k = 0; k < phi.extents()[2]; ++k)
+                phi(i, j, k) = F(k * 1.0 / N_grid);
+    phi.update_ghosts();
+
+    if (com.rank() == 0)
     {
-        exact.at({i}) = F(double(i) / N);
+        std::ofstream fd(shape + "_" + fname + ".dat");
+        int i = 0, j = 0;
+        for (int k = 0; k < N_eval; ++k)
+        {
+            double x = i, y = j, z = k * (N_grid * 1.0 / N_eval);
+            fd << z / N_grid << " " << phi.interpolate(x, y, z) << '\n';
+        }
     }
-    exact.interpolate({0});
 }
-
-const double pi = acos(-1);
 
 int main()
 {
-    // simple_test<10>(10000,"triangle", [](double x) { return 3*std::min(x,1-x)
-    // ; });
-    test<12>(10000, "triangle",
-             [](double x) { return 3 * std::min(x, 1 - x); });
-    test<100>(10000, "sine_5_6", [](double x) {
-        return sin(x * 2 * pi * 6) + sin(x * 2 * pi * 5);
-    });
+    mpi::environment env;
+    mpi::communicator world;
+
+    const int N_grid = 20, N_eval = 2000;
+    write_pts<PM::filters::CIC>(world, N_grid, N_eval, Triangle_shape, "CIC",
+                                "triangle");
+    write_pts<PM::filters::NGP>(world, N_grid, N_eval, Triangle_shape, "NGP",
+                                "triangle");
+    write_pts<PM::filters::TSC>(world, N_grid, N_eval, Triangle_shape, "TSC",
+                                "triangle");
+    write_pts<PM::filters::PCS>(world, N_grid, N_eval, Triangle_shape, "PCS",
+                                "triangle");
+    write_pts<PM::filters::Gaussian>(world, N_grid, N_eval, Triangle_shape,
+                                     "Gaussian", "triangle");
+
+    write_pts<PM::filters::CIC>(world, N_grid, N_eval, Sine_shape, "CIC",
+                                "sine");
+    write_pts<PM::filters::NGP>(world, N_grid, N_eval, Sine_shape, "NGP",
+                                "sine");
+    write_pts<PM::filters::TSC>(world, N_grid, N_eval, Sine_shape, "TSC",
+                                "sine");
+    write_pts<PM::filters::PCS>(world, N_grid, N_eval, Sine_shape, "PCS",
+                                "sine");
+    write_pts<PM::filters::Gaussian>(world, N_grid, N_eval, Sine_shape,
+                                     "Gaussian", "sine");
+
     return 0;
 }

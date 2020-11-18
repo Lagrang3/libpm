@@ -7,6 +7,7 @@
 
 #include <pm/detail/fft.hpp>
 #include <pm/detail/utilities.hpp>
+#include <pm/filters.hpp>
 
 namespace PM
 {
@@ -16,7 +17,7 @@ namespace PM
         Y
     };
 
-    template <class T, int Nghost = 1>
+    template <class T, class interpolator_t = filters::CIC>
     class Field
     {
         using communicator = boost::mpi::cartesian_communicator;
@@ -38,6 +39,8 @@ namespace PM
         void local_fft(FFT_type);
 
         void delegated_constructor();
+
+        interpolator_t W_inter;
 
        public:
         Field(MPI_Comm raw_com, size_t N, std::array<int, 2> proc);
@@ -62,11 +65,15 @@ namespace PM
         void tranpose_xz();
 
         auto get_communicator() const { return com; }
-        constexpr int ghost_thick() const { return Nghost; }
+        constexpr int ghost_thick() const { return interpolator_t::width / 2; }
 
         void update_ghosts();
 
+        T interpolate(double x, double y, double z) const;
+
         // TODO serialize
+        // TODO power spectrum
+        // TODO mass sampling
     };
 }  // namespace PM
 

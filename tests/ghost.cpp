@@ -46,6 +46,7 @@ BOOST_AUTO_TEST_CASE(ghost_indexing)
     //  ***|** 2
 
     const int nghost = F.ghost_thick();
+    BOOST_REQUIRE(nghost >= 1);
 
     BOOST_TEST_MESSAGE("x,y,z in-range");
     for (int i = 0; i < F.extents()[0]; ++i)
@@ -123,6 +124,7 @@ BOOST_AUTO_TEST_CASE(ghost_update)
     F.update_ghosts();
 
     const int nghost = F.ghost_thick();
+    BOOST_REQUIRE(nghost >= 1);
     for (int i = -nghost; i < F.extents()[0] + nghost; ++i)
         for (int j = -nghost; j < F.extents()[1] + nghost; ++j)
             for (int k = -nghost; k < F.extents()[2] + nghost; ++k)

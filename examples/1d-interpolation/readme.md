@@ -13,7 +13,7 @@ Triangular shape
 ----------------
 
 In this case *F=3 min(x,1-x)* which is a triangular
-shape, and *N=11*.
+shape, and *N=20*.
 
 Nearest grid point (ngp) function compared to 
 the exact interpolation filter (Whittaker-Shannon formula)
@@ -39,50 +39,36 @@ the exact interpolation filter (Whittaker-Shannon formula)
 Gaussian function compared to 
 the exact interpolation filter (Whittaker-Shannon formula)
 
-![](./assets/triangle_gauss.png)
-
-Low-pass filter function with 5 modes compared to 
-the exact interpolation filter (Whittaker-Shannon formula)
-
-![](./assets/triangle_low_pass.png)
-
+![](./assets/triangle_gaussian.png)
 
 Sine+sine
 ---------
 
-In this case *F= sin(12 pi x)+sin(10 pi x)* and *N=100*.
+In this case *F= sin(2 pi x)+3 sin(4 pi x)* and *N=20*.
 
 
 Nearest grid point (ngp) function compared to 
 the exact interpolation filter (Whittaker-Shannon formula)
 
-![](./assets/sine_5_6_ngp.png)
+![](./assets/sine_ngp.png)
 
 
 Cloud-in-cell (cic) function compared to 
 the exact interpolation filter (Whittaker-Shannon formula)
 
-![](./assets/sine_5_6_cic.png)
+![](./assets/sine_cic.png)
 
 Triangular-shaped-cloud (tsc) function compared to 
 the exact interpolation filter (Whittaker-Shannon formula)
 
-![](./assets/sine_5_6_tsc.png)
+![](./assets/sine_tsc.png)
 
 Piecewise-cubic-spline (pcs) function compared to 
 the exact interpolation filter (Whittaker-Shannon formula)
 
-![](./assets/sine_5_6_pcs.png)
+![](./assets/sine_pcs.png)
 
 Gaussian function compared to 
 the exact interpolation filter (Whittaker-Shannon formula)
 
-![](./assets/sine_5_6_gauss.png)
-
-Low-pass filter function with 5 modes compared to 
-the exact interpolation filter (Whittaker-Shannon formula).
-In this case the input function has up to 6 modes
-therefore the interpolating function (with only 5 modes)
-can only *see* the *sin(10 pi x)* component.
-
-![](./assets/sine_5_6_low_pass.png)
+![](./assets/sine_gaussian.png)
