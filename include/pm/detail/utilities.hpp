@@ -32,6 +32,7 @@ namespace PM
                                   const int parts,
                                   const int index)
         // Precondition: parts>0, Length>0, Length>index>=0
+        // ensured: 0<= return < parts
         {
             int q = Length / parts, r = Length % parts;
             int Q = q + (r ? 1 : 0);

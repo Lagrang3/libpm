@@ -46,3 +46,13 @@ interpolation_ut = executable('interpolation-ut',
 test('Interpolation',mpirun,
    args: ['-np','2',interpolation_ut],
    is_parallel: false)
+
+test_files += files('sampling.cpp')
+sampling_ut = executable('sampling-ut',
+    ['sampling.cpp'],
+    include_directories: [libpm_include], 
+    dependencies: [boost,boost_ut,mpi,boost_mpi],
+    link_with: [libpm])
+test('Sampling',mpirun,
+   args: ['-np','4',sampling_ut],
+   is_parallel: false)

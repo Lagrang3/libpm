@@ -44,7 +44,7 @@ void write_pts(mpi::communicator com,
         }
     }
 
-    PM::Field<double, filter_t> phi(com, N_grid, {1, 1});
+    PM::Field<double, filter_t, filter_t> phi(com, N_grid, {1, 1});
 
     for (int i = 0; i < phi.extents()[0]; ++i)
         for (int j = 0; j < phi.extents()[1]; ++j)

@@ -51,7 +51,7 @@ BOOST_TEST_GLOBAL_FIXTURE(fixture);
 template <class filter_t, class callable>
 double interpolate_n_check(const int N_grid, const int N_eval, callable myfun)
 {
-    PM::Field<double, filter_t> F(fixture::world, N_grid, {2, 1});
+    PM::Field<double, filter_t, filter_t> F(fixture::world, N_grid, {2, 1});
 
     // const auto& offset = F.offset();
     for (int i = 0; i < F.extents()[0]; ++i)
@@ -83,7 +83,7 @@ double interpolate_n_check(const int N_grid, const int N_eval, callable myfun)
 template <class filter_t, class callable>
 double check_homogenuity(const int N_grid, const int N_eval, callable myfun)
 {
-    PM::Field<double, filter_t> F(fixture::world, N_grid, {2, 1});
+    PM::Field<double, filter_t, filter_t> F(fixture::world, N_grid, {2, 1});
 
     // const auto& offset = F.offset();
     for (int i = 0; i < F.extents()[0]; ++i)

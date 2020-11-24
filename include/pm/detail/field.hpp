@@ -4,12 +4,13 @@
 #include <boost/serialization/complex.hpp>
 #include <boost/serialization/vector.hpp>
 #include <cassert>
+#include <functional>
 #include <pm/detail/fft.hpp>
 
 namespace PM
 {
-    template <class T, class interpolator_t>
-    void Field<T, interpolator_t>::delegated_constructor()
+    template <class T, class sampler_t, class interpolator_t>
+    void Field<T, sampler_t, interpolator_t>::delegated_constructor()
     {
         const auto coord = com.coordinates(com.rank());
         const auto top = com.topology();
@@ -48,10 +49,11 @@ namespace PM
         gstart_y_up = {0, N_loc[1], 0};
     }
 
-    template <class T, class interpolator_t>
-    Field<T, interpolator_t>::Field(boost::mpi::communicator boost_com,
-                                    size_t N,
-                                    std::array<int, 2> proc)
+    template <class T, class sampler_t, class interpolator_t>
+    Field<T, sampler_t, interpolator_t>::Field(
+        boost::mpi::communicator boost_com,
+        int64_t N,
+        std::array<int, 2> proc)
         : com(boost_com,
               boost::mpi::cartesian_topology{{proc[0], true}, {proc[1], true}}),
           N_glob{N}
@@ -59,10 +61,10 @@ namespace PM
         delegated_constructor();
     }
 
-    template <class T, class interpolator_t>
-    Field<T, interpolator_t>::Field(MPI_Comm raw_com,
-                                    size_t N,
-                                    std::array<int, 2> proc)
+    template <class T, class sampler_t, class interpolator_t>
+    Field<T, sampler_t, interpolator_t>::Field(MPI_Comm raw_com,
+                                               int64_t N,
+                                               std::array<int, 2> proc)
         : com(boost::mpi::communicator(
                   raw_com,
                   boost::mpi::comm_create_kind::comm_duplicate),
@@ -72,8 +74,8 @@ namespace PM
         delegated_constructor();
     }
 
-    template <class T, class interpolator_t>
-    void Field<T, interpolator_t>::fft(FFT_type type)
+    template <class T, class sampler_t, class interpolator_t>
+    void Field<T, sampler_t, interpolator_t>::fft(FFT_type type)
     {
         local_fft(type);
 
@@ -85,16 +87,16 @@ namespace PM
         local_fft(type);
         tranpose_xz();
     }
-    template <class T, class interpolator_t>
-    void Field<T, interpolator_t>::local_fft(FFT_type type)
+    template <class T, class sampler_t, class interpolator_t>
+    void Field<T, sampler_t, interpolator_t>::local_fft(FFT_type type)
     {
         for (int i = 0; i < N_loc[0]; ++i)
             for (int j = 0; j < N_loc[1]; ++j)
                 FFTW3(&data[index(i, j, 0)], &data[index(i, j + 1, 0)],
                       &data[index(i, j, 0)], type);
     }
-    template <class T, class interpolator_t>
-    auto Field<T, interpolator_t>::split_data(direction_t dir) const
+    template <class T, class sampler_t, class interpolator_t>
+    auto Field<T, sampler_t, interpolator_t>::split_data(direction_t dir) const
     {
         const auto top = com.topology();
         const auto coord = com.coordinates(com.rank());
@@ -133,8 +135,8 @@ namespace PM
         return buff;
     }
 
-    template <class T, class interpolator_t>
-    void Field<T, interpolator_t>::tranpose_yz()
+    template <class T, class sampler_t, class interpolator_t>
+    void Field<T, sampler_t, interpolator_t>::tranpose_yz()
     {
         const auto top = com.topology();
         const int com_size = top[1].size;
@@ -158,8 +160,8 @@ namespace PM
                             V[utilities::index(i, k, j, strd)];
                 }
     }
-    template <class T, class interpolator_t>
-    void Field<T, interpolator_t>::tranpose_xz()
+    template <class T, class sampler_t, class interpolator_t>
+    void Field<T, sampler_t, interpolator_t>::tranpose_xz()
     {
         const auto top = com.topology();
         const int com_size = top[0].size;
@@ -184,8 +186,9 @@ namespace PM
                 }
     }
 
-    template <class T, class interpolator_t>
-    auto& Field<T, interpolator_t>::operator()(int x, int y, int z)
+    template <class T, class sampler_t, class interpolator_t>
+    auto& Field<T, sampler_t, interpolator_t>::operator()(int x, int y, int z)
+    // precondition: -Nghost <= x,y,z < Nghost + Nlocal
     {
         // x planes comes first, because they are wider
         // +---------> y dir
@@ -210,8 +213,10 @@ namespace PM
         return data[index(x, y, z, strides)];
     }
 
-    template <class T, class interpolator_t>
-    const auto& Field<T, interpolator_t>::operator()(int x, int y, int z) const
+    template <class T, class sampler_t, class interpolator_t>
+    const auto& Field<T, sampler_t, interpolator_t>::operator()(int x,
+                                                                int y,
+                                                                int z) const
     {
         using utilities::index;
         z = utilities::modulo(z, N_glob);
@@ -225,8 +230,8 @@ namespace PM
             return ghost_y_up[index(x, y, z, gstrides_y, gstart_y_up)];
         return data[index(x, y, z, strides)];
     }
-    template <class T, class interpolator_t>
-    auto& Field<T, interpolator_t>::at(int x, int y, int z)
+    template <class T, class sampler_t, class interpolator_t>
+    auto& Field<T, sampler_t, interpolator_t>::at(int x, int y, int z)
     {
         using utilities::index;
         z = utilities::modulo(z, N_glob);
@@ -240,8 +245,10 @@ namespace PM
             return ghost_y_up.at(index(x, y, z, gstrides_y, gstart_y_up));
         return data.at(index(x, y, z, strides));
     }
-    template <class T, class interpolator_t>
-    const auto& Field<T, interpolator_t>::at(int x, int y, int z) const
+    template <class T, class sampler_t, class interpolator_t>
+    const auto& Field<T, sampler_t, interpolator_t>::at(int x,
+                                                        int y,
+                                                        int z) const
     {
         using utilities::index;
         z = utilities::modulo(z, N_glob);
@@ -256,8 +263,8 @@ namespace PM
         return data.at(index(x, y, z, strides));
     }
 
-    template <class T, class interpolator_t>
-    void Field<T, interpolator_t>::update_ghosts()
+    template <class T, class sampler_t, class interpolator_t>
+    void Field<T, sampler_t, interpolator_t>::update_ghosts()
     {
         const int Nghost = ghost_thick();
         std::vector<T> buff;
@@ -303,9 +310,47 @@ namespace PM
 
         com.sendrecv(next.second, 0x10, buff, next.first, 0x10, ghost_x_down);
     }
+    template <class T, class sampler_t, class interpolator_t>
+    void Field<T, sampler_t, interpolator_t>::reduce_ghosts()
+    {
+        const int Nghost = ghost_thick();
+        std::vector<T> buff;
 
-    template <class T, class interpolator_t>
-    T Field<T, interpolator_t>::interpolate(double x, double y, double z) const
+        // exchange along X
+        auto next = com.shifted_ranks(0, 1);
+
+        com.sendrecv(next.second, 0x10, ghost_x_up, next.first, 0x10, buff);
+        for (int i = 0, pos = 0; i < Nghost; ++i)
+            for (int j = 0 - Nghost; j < N_loc[1] + Nghost; ++j)
+                for (int k = 0; k < N_loc[2]; ++k, ++pos)
+                    (*this)(i, j, k) += buff[pos];
+
+        com.sendrecv(next.first, 0x11, ghost_x_down, next.second, 0x11, buff);
+        for (int i = N_loc[0] - Nghost, pos = 0; i < N_loc[0]; ++i)
+            for (int j = 0 - Nghost; j < N_loc[1] + Nghost; ++j)
+                for (int k = 0; k < N_loc[2]; ++k, ++pos)
+                    (*this)(i, j, k) += buff[pos];
+
+        // exchange along Y, the X is wider
+        next = com.shifted_ranks(1, 1);
+
+        com.sendrecv(next.second, 0x00, ghost_y_up, next.first, 0x00, buff);
+        for (int i = 0, pos = 0; i < N_loc[0]; ++i)
+            for (int j = 0; j < Nghost; ++j)
+                for (int k = 0; k < N_loc[2]; ++k, ++pos)
+                    (*this)(i, j, k) += buff[pos];
+
+        com.sendrecv(next.first, 0x01, ghost_y_down, next.second, 0x01, buff);
+        for (int i = 0, pos = 0; i < N_loc[0]; ++i)
+            for (int j = N_loc[1] - Nghost; j < N_loc[1]; ++j)
+                for (int k = 0; k < N_loc[2]; ++k, ++pos)
+                    (*this)(i, j, k) += buff[pos];
+    }
+
+    template <class T, class sampler_t, class interpolator_t>
+    T Field<T, sampler_t, interpolator_t>::interpolate(double x,
+                                                       double y,
+                                                       double z) const
     // x,y,z from 0 to N_glob
     {
         constexpr int width = interpolator_t::width;
@@ -318,16 +363,17 @@ namespace PM
         {
             auto beg = Wval.begin() + width * d;
             low_coord[d] = std::ceil(coord[d] - dx);
-            filters::weights(W_inter, low_coord[d], coord[d], beg, beg + width);
+            filters::weights(W_interpolator, low_coord[d], coord[d], beg,
+                             beg + width);
         }
-        double ret = 0;
+        T ret{};
 
         for (int i = 0; i < width; ++i)
             for (int j = 0; j < width; ++j)
                 for (int k = 0; k < width; ++k)
                 {
-                    double w = (*this)(i + low_coord[0], j + low_coord[1],
-                                       k + low_coord[2]);
+                    T w = (*this)(i + low_coord[0], j + low_coord[1],
+                                  k + low_coord[2]);
                     w *= Wval[i];
                     w *= Wval[j + width];
                     w *= Wval[k + 2 * width];
@@ -335,5 +381,142 @@ namespace PM
                 }
 
         return ret;
+    }
+    template <class T, class sampler_t, class interpolator_t>
+    void Field<T, sampler_t, interpolator_t>::clear_ghosts()
+    {
+        std::fill(ghost_x_down.begin(), ghost_x_down.end(), T{});
+        std::fill(ghost_x_up.begin(), ghost_x_up.end(), T{});
+        std::fill(ghost_y_down.begin(), ghost_y_down.end(), T{});
+        std::fill(ghost_y_up.begin(), ghost_y_up.end(), T{});
+    }
+    template <class T, class sampler_t, class interpolator_t>
+    void Field<T, sampler_t, interpolator_t>::clear()
+    {
+        std::fill(data.begin(), data.end(), T{});
+        clear_ghosts();
+    }
+    template <class T, class sampler_t, class interpolator_t>
+    std::array<double, 3> Field<T, sampler_t, interpolator_t>::to_local(
+        std::array<double, 3> p) const
+    // precondition: start_pos[i] <= p[i] < N_local + start_pos[i]
+    // ensured: 0<= return[i] < N_local
+    {
+        for (int d = 0; d < 3; ++d)
+            p[d] -= start_pos[d];
+        return p;
+    }
+    template <class T, class sampler_t, class interpolator_t>
+    int Field<T, sampler_t, interpolator_t>::process(
+        std::array<double, 3> p) const
+    // precondition: 0 <= p[i] < N_glob
+    // ensured: 0 <= return < com.size()
+    {
+        std::array<int, 3> pos;
+        const auto& top = com.topology();
+        for (int d = 0; d < 3; ++d)
+            pos[d] = std::floor(p[d]);
+        return com.rank(
+            {utilities::rank_decompose(N_glob, top[0].size, pos[0]),
+             utilities::rank_decompose(N_glob, top[1].size, pos[1])});
+    }
+
+    template <class T, class sampler_t, class interpolator_t>
+    void Field<T, sampler_t, interpolator_t>::local_sample(
+        std::array<double, 3> pos,
+        double mass)
+    // precondition: 0<= pos[i] < N_loc
+    {
+        constexpr int width = sampler_t::width;
+        const double dx = 0.5 * width;
+        std::array<double, 3 * width> Wval;
+        std::array<int, 3> low_coord;
+
+        for (int d = 0; d < 3; ++d)
+        {
+            auto beg = Wval.begin() + width * d;
+            low_coord[d] = std::ceil(pos[d] - dx);
+            filters::weights(W_sampler, low_coord[d], pos[d], beg, beg + width);
+        }
+        for (int i = 0; i < width; ++i)
+            for (int j = 0; j < width; ++j)
+                for (int k = 0; k < width; ++k)
+                {
+                    T w{mass};
+                    w *= Wval[i];
+                    w *= Wval[j + width];
+                    w *= Wval[k + 2 * width];
+                    (*this)(i + low_coord[0], j + low_coord[1],
+                            k + low_coord[2]) += w;
+                }
+    }
+
+    template <class T, class sampler_t, class interpolator_t>
+    void Field<T, sampler_t, interpolator_t>::sample(
+        const std::vector<std::array<double, 3>> particles)
+    {
+        clear_ghosts();
+
+        std::vector<std::vector<std::array<double, 3>>> buff(com.size());
+        for (const auto& p : particles)
+        {
+            std::array<double, 3> p_new{p};
+            for (int i = 0; i < 3; ++i)
+                p_new[i] = utilities::modulo(p[i], N_glob);
+            buff[process(p_new)].push_back(p_new);
+        }
+        boost::mpi::all_to_all(com, buff, buff);
+
+        for (auto& v : buff)
+            for (auto& p : v)
+                local_sample(to_local(p), 1.0);
+
+        reduce_ghosts();
+        update_ghosts();
+    }
+    template <class T, class sampler_t, class interpolator_t>
+    T Field<T, sampler_t, interpolator_t>::sum() const
+    {
+        T local_sum{};
+        for (auto x : data)
+            local_sum += x;
+        return boost::mpi::all_reduce(com, local_sum, std::plus<T>());
+    }
+    template <class T, class sampler_t, class interpolator_t>
+    std::vector<T> Field<T, sampler_t, interpolator_t>::serialize() const
+    {
+        const int root = 0;
+        const auto& top = com.topology();
+        std::vector<std::vector<T>> tmp;
+        boost::mpi::gather(com, data, tmp, root);
+
+        if (com.rank() != root)
+            return std::vector<T>{};
+
+        std::vector<T> out_buff(N_glob * N_glob * N_glob);
+        const std::array<int64_t, 3> strd_buff{N_glob * N_glob, N_glob, 1};
+
+        for (int px = 0; px < top[0].size; ++px)
+            for (int py = 0; py < top[1].size; ++py)
+            {
+                const int p = com.rank({px, py});
+                const int start_x =
+                    utilities::sum_decompose(N_glob, top[0].size, px);
+                const int start_y =
+                    utilities::sum_decompose(N_glob, top[1].size, py);
+                const std::array<int64_t, 3> nloc{
+                    utilities::decompose(N_glob, top[0].size, px),
+                    utilities::decompose(N_glob, top[1].size, py), N_glob};
+                const std::array<int64_t, 3> strd{nloc[1] * nloc[2], nloc[2],
+                                                  1};
+
+                for (int i = 0; i < nloc[0]; ++i)
+                    for (int j = 0; j < nloc[1]; ++j)
+                        for (int k = 0; k < nloc[2]; ++k)
+                            out_buff[utilities::index(i + start_x, j + start_y,
+                                                      k, strd_buff)] =
+                                tmp[p][utilities::index(i, j, k, strd)];
+            }
+        return out_buff;
     }
 }  // namespace PM
