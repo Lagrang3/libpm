@@ -12,14 +12,6 @@ fftw = executable('fftw','fftw.cpp',
     dependencies: [boost_ut,fftw3],
     link_with: libpm)
 test('FFTW',fftw)
-    
-test_files += files('field.cpp')
-field = executable('field',['field.cpp'],
-    include_directories: libpm_include,
-    dependencies: [boost,boost_ut,boost_mpi,mpi,fftw3])
-test('field API',mpirun,
-   args: ['-np','6',field],
-   is_parallel: false)
 
 test_files += files('filters.cpp')
 filters_ut = executable('filters',
@@ -28,12 +20,28 @@ filters_ut = executable('filters',
     dependencies: [boost_ut],
     link_with: [libpm])
 test('Filters',filters_ut)
+    
+test_files += files('transpose.cpp')
+transpose_ut = executable('transpose',['transpose.cpp'],
+    include_directories: libpm_include,
+    dependencies: [boost,boost_ut,boost_mpi,mpi])
+test('field transpose',mpirun,
+   args: ['-np','6',transpose_ut],
+   is_parallel: false)
+
+test_files += files('field-fft.cpp')
+field_fft = executable('field-fft',['field-fft.cpp'],
+    include_directories: libpm_include,
+    dependencies: [boost,boost_ut,boost_mpi,mpi,fftw3])
+test('field FFT',mpirun,
+   args: ['-np','6',field_fft],
+   is_parallel: false)
 
 test_files += files('ghost.cpp')
 ghost_ut = executable('ghost',['ghost.cpp'],
     include_directories: libpm_include,
     dependencies: [boost,boost_ut,boost_mpi,mpi,fftw3])
-test('field ghost cells',mpirun,
+test('field ghost-cells',mpirun,
    args: ['-np','6',ghost_ut],
    is_parallel: false)
 
@@ -43,7 +51,7 @@ interpolation_ut = executable('interpolation-ut',
     include_directories: [libpm_include], 
     dependencies: [boost,boost_ut,mpi,boost_mpi],
     link_with: [libpm])
-test('Interpolation',mpirun,
+test('field interpolation',mpirun,
    args: ['-np','2',interpolation_ut],
    is_parallel: false)
 
@@ -53,6 +61,6 @@ sampling_ut = executable('sampling-ut',
     include_directories: [libpm_include], 
     dependencies: [boost,boost_ut,mpi,boost_mpi],
     link_with: [libpm])
-test('Sampling',mpirun,
+test('field sampling',mpirun,
    args: ['-np','4',sampling_ut],
    is_parallel: false)
