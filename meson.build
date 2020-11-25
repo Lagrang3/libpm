@@ -13,6 +13,7 @@ boost_mpi=dependency('boost',modules :['mpi','serialization'])
 boost_ut=dependency('boost',modules :['unit_test_framework'])
 mpi = dependency('mpi',language: 'cpp')
 mpirun = find_program('mpirun')
+python = find_program('python3')
 
 pkg=import('pkgconfig')
 fftw3 = dependency('fftw3')

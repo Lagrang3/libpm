@@ -5,3 +5,6 @@ exe = executable('1d-interpolation','main.cpp',
     dependencies: [boost,mpi,boost_mpi],
     link_with: libpm)
 
+plot_script = files('plot.py')
+
+subdir('assets')

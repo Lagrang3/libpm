@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import matplotlib.pyplot as plt
+import sys,os
 
 def plot(ax,shape,fname):
     ax.set_title(fname)
@@ -37,13 +38,14 @@ def plot_interpolation(shape,funlist,subname):
     plt.savefig(shape+'_'+subname+'.png')
 
 if __name__=="__main__":
-    plot_interpolation('triangle',['exact','NGP'],'ngp')
-    plot_interpolation('triangle',['exact','CIC'],'cic')
-    plot_interpolation('triangle',['exact','TSC'],'tsc')
-    plot_interpolation('triangle',['exact','PCS',],'pcs')
-    plot_interpolation('triangle',['exact','Gaussian'],'gaussian')
-    plot_interpolation('sine',['exact','NGP'],'ngp')
-    plot_interpolation('sine',['exact','CIC'],'cic')
-    plot_interpolation('sine',['exact','TSC'],'tsc')
-    plot_interpolation('sine',['exact','PCS',],'pcs')
-    plot_interpolation('sine',['exact','Gaussian'],'gaussian')
+    os.chdir(sys.argv[1])
+    plot_interpolation('triangle',['exact','ngp'],'ngp')
+    plot_interpolation('triangle',['exact','cic'],'cic')
+    plot_interpolation('triangle',['exact','tsc'],'tsc')
+    plot_interpolation('triangle',['exact','pcs',],'pcs')
+    plot_interpolation('triangle',['exact','gaussian'],'gaussian')
+    plot_interpolation('sine',['exact','ngp'],'ngp')
+    plot_interpolation('sine',['exact','cic'],'cic')
+    plot_interpolation('sine',['exact','tsc'],'tsc')
+    plot_interpolation('sine',['exact','pcs',],'pcs')
+    plot_interpolation('sine',['exact','gaussian'],'gaussian')

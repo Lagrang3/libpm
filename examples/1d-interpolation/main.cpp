@@ -8,6 +8,7 @@
 #include <cmath>
 #include <fstream>
 #include <string>
+#include <unistd.h>
 
 namespace mpi = boost::mpi;
 
@@ -64,33 +65,34 @@ void write_pts(mpi::communicator com,
     }
 }
 
-int main()
+int main(int narg, char** args)
 {
+    chdir(args[1]);
     mpi::environment env;
     mpi::communicator world;
 
     const int N_grid = 20, N_eval = 2000;
-    write_pts<PM::filters::CIC>(world, N_grid, N_eval, Triangle_shape, "CIC",
+    write_pts<PM::filters::CIC>(world, N_grid, N_eval, Triangle_shape, "cic",
                                 "triangle");
-    write_pts<PM::filters::NGP>(world, N_grid, N_eval, Triangle_shape, "NGP",
+    write_pts<PM::filters::NGP>(world, N_grid, N_eval, Triangle_shape, "ngp",
                                 "triangle");
-    write_pts<PM::filters::TSC>(world, N_grid, N_eval, Triangle_shape, "TSC",
+    write_pts<PM::filters::TSC>(world, N_grid, N_eval, Triangle_shape, "tsc",
                                 "triangle");
-    write_pts<PM::filters::PCS>(world, N_grid, N_eval, Triangle_shape, "PCS",
+    write_pts<PM::filters::PCS>(world, N_grid, N_eval, Triangle_shape, "pcs",
                                 "triangle");
     write_pts<PM::filters::Gaussian>(world, N_grid, N_eval, Triangle_shape,
-                                     "Gaussian", "triangle");
+                                     "gaussian", "triangle");
 
-    write_pts<PM::filters::CIC>(world, N_grid, N_eval, Sine_shape, "CIC",
+    write_pts<PM::filters::CIC>(world, N_grid, N_eval, Sine_shape, "cic",
                                 "sine");
-    write_pts<PM::filters::NGP>(world, N_grid, N_eval, Sine_shape, "NGP",
+    write_pts<PM::filters::NGP>(world, N_grid, N_eval, Sine_shape, "ngp",
                                 "sine");
-    write_pts<PM::filters::TSC>(world, N_grid, N_eval, Sine_shape, "TSC",
+    write_pts<PM::filters::TSC>(world, N_grid, N_eval, Sine_shape, "tsc",
                                 "sine");
-    write_pts<PM::filters::PCS>(world, N_grid, N_eval, Sine_shape, "PCS",
+    write_pts<PM::filters::PCS>(world, N_grid, N_eval, Sine_shape, "pcs",
                                 "sine");
     write_pts<PM::filters::Gaussian>(world, N_grid, N_eval, Sine_shape,
-                                     "Gaussian", "sine");
+                                     "gaussian", "sine");
 
     return 0;
 }
